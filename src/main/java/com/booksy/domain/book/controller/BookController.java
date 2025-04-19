@@ -1,0 +1,24 @@
+package com.booksy.domain.book.controller;
+
+import com.booksy.domain.book.dto.BookResponseDto;
+import com.booksy.domain.book.service.BookService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/books")
+public class BookController {
+
+  private final BookService bookService;
+
+  @GetMapping("/{isbn}")
+  public ResponseEntity<BookResponseDto> getBook(@PathVariable String isbn) {
+    BookResponseDto response = bookService.getBookByIsbn(isbn);
+    return ResponseEntity.ok(response);
+  }
+}
