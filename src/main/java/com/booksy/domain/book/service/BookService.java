@@ -4,6 +4,8 @@ import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.domain.book.repository.BookRepository;
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,7 @@ public class BookService {
   @Transactional(readOnly = true)
   public BookResponseDto getBookByIsbn(String isbn) {
     Book book = bookRepository.findById(isbn)
-        .orElseThrow();
+        .orElseThrow(() -> new ApiException(ErrorCode.BOOK_NOT_FOUND));
     return bookMapper.toDto(book);
   }
 
