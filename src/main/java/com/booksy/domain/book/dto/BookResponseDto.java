@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+/**
+ * 책 정보를 조회할 때 클라이언트에게 전달되는 응답 DTO
+ */
 @Data
 @Builder
 @AllArgsConstructor
@@ -16,5 +19,5 @@ public class BookResponseDto {
   private String publisher;
   private LocalDate publishedDate;
   private int totalPage;
-  
+
 }

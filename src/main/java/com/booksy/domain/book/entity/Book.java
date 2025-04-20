@@ -9,6 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Book 엔티티 클래스
+ * DB의 'book' 테이블과 매핑되며, 도서 정보를 표현한다.
+ */
 @Entity
 @Table(name = "book")
 @Getter

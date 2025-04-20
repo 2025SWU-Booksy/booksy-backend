@@ -16,6 +16,12 @@ public class BookController {
 
   private final BookService bookService;
 
+  /**
+   * ISBN으로 도서 정보를 조회하는 API
+   *
+   * @param isbn 조회할 도서의 ISBN
+   * @return 도서 정보를 담은 BookResponseDto
+   */
   @GetMapping("/{isbn}")
   public ResponseEntity<BookResponseDto> getBook(@PathVariable String isbn) {
     BookResponseDto response = bookService.getBookByIsbn(isbn);
