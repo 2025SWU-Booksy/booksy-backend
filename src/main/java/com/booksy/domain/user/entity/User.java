@@ -6,6 +6,9 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+/**
+ * user 엔티티 클래스
+ */
 @Entity
 @Table(name = "user")
 @Getter
@@ -41,6 +44,7 @@ public class User {
 
   private Integer age;
 
+  @Builder.Default // 초기값 고정
   @Column(nullable = false)
   private Boolean isPushEnabled = true;
 
