@@ -5,6 +5,9 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 회원가입 정보 요청 dto
+ */
 @Getter
 @NoArgsConstructor
 public class SignupRequest {
