@@ -2,10 +2,12 @@ package com.booksy.domain.book.service;
 
 import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.entity.Book;
+import com.booksy.domain.book.external.BookExternalClient;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.domain.book.repository.BookRepository;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ public class BookService {
 
   private final BookRepository bookRepository;
   private final BookMapper bookMapper;
+  private final BookExternalClient bookExternalClient;
 
   /**
    * ISBN을 통해 도서 정보를 조회하고, DTO로 반환
@@ -31,6 +34,18 @@ public class BookService {
     Book book = bookRepository.findById(isbn)
         .orElseThrow(() -> new ApiException(ErrorCode.BOOK_NOT_FOUND));
     return bookMapper.toDto(book);
+  }
+
+  /**
+   * 키워드로 도서 목록을 검색 (알라딘 API 기준)
+   *
+   * @param keyword 검색어
+   * @param limit   최대 검색 결과 수
+   * @return BookResponseDto 리스트
+   */
+  @Transactional(readOnly = true)
+  public List<BookResponseDto> searchBooksByKeyword(String keyword, int limit) {
+    return bookExternalClient.searchBooksByKeyword(keyword, limit);
   }
 
 }
