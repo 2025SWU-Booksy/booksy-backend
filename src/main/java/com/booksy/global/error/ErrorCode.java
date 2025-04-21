@@ -34,7 +34,8 @@ public enum ErrorCode {
   /* 필요한 도메인 에러코드 추가 */
 
   // BOOK
-  BOOK_NOT_FOUND(404, "B001", "Book not found", LogLevel.WARN),
+  BOOK_NOT_FOUND_INTERNAL(404, "B001", "Book not found", LogLevel.WARN),
+  BOOK_NOT_FOUND_EXTERNAL(404, "B002", "Book not found from Aladin API", LogLevel.WARN),
 
   // SECURE
   UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN);
