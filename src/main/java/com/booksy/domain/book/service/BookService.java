@@ -24,9 +24,9 @@ public class BookService {
   private final BookExternalClient bookExternalClient;
 
   /**
-   * ISBN을 통해 도서 정보를 조회하고, DTO로 반환
+   * ISBN을 기반으로 내부 DB에 저장된 도서 정보를 조회
    *
-   * @param isbn 도서 ISBN
+   * @param isbn 조회할 도서의 ISBN
    * @return BookResponseDto
    */
   @Transactional(readOnly = true)
@@ -36,10 +36,11 @@ public class BookService {
     return bookMapper.toDto(book);
   }
 
+
   /**
-   * 키워드로 도서 목록을 검색 (알라딘 API 기준)
+   * 알라딘 API를 통해 키워드 기반 도서 목록을 검색
    *
-   * @param keyword 검색어
+   * @param keyword 검색 키워드
    * @param limit   최대 검색 결과 수
    * @return BookResponseDto 리스트
    */
@@ -48,6 +49,12 @@ public class BookService {
     return bookExternalClient.searchBooksByKeyword(keyword, limit);
   }
 
+  /**
+   * 알라딘 API를 통해 ISBN 기반 도서 상세 정보를 조회
+   *
+   * @param isbn 조회할 도서의 ISBN
+   * @return BookResponseDto
+   */
   @Transactional(readOnly = true)
   public BookResponseDto getBookDetailFromAladin(String isbn) {
     return bookExternalClient.getBookByIsbnFromAladin(isbn);

@@ -27,11 +27,11 @@ public class BookExternalClient {
   private String apiKey;
 
   /**
-   * 키워드로 책 리스트를 알라딘에서 조회
+   * 알라딘 API에 키워드 검색 요청을 보내 도서 리스트를 가져온다.
    *
-   * @param keyword    검색할 키워드
-   * @param maxResults 최대 결과 수
-   * @return BookResponseDto 리스트
+   * @param keyword    검색 키워드
+   * @param maxResults 최대 검색 결과 수
+   * @return BookResponseDto 리스트 (정제된 형태)
    */
   public List<BookResponseDto> searchBooksByKeyword(String keyword, int maxResults) {
     String url = UriComponentsBuilder.fromHttpUrl(
@@ -55,6 +55,13 @@ public class BookExternalClient {
     return bookMapper.toDtoListFromAladin(response.getItem());
   }
 
+  /**
+   * 알라딘 API에 ISBN 기반 단일 도서 상세 조회 요청을 보낸다.
+   *
+   * @param isbn 조회할 도서의 ISBN
+   * @return BookResponseDto (정제된 도서 정보)
+   * @exception ApiException 알라딘 API로부터 응답이 없거나 결과가 비어있을 경우
+   */
   public BookResponseDto getBookByIsbnFromAladin(String isbn) {
     String url = UriComponentsBuilder.fromHttpUrl(
             "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
