@@ -32,7 +32,7 @@ public class BookService {
   @Transactional(readOnly = true)
   public BookResponseDto getBookByIsbn(String isbn) {
     Book book = bookRepository.findById(isbn)
-        .orElseThrow(() -> new ApiException(ErrorCode.BOOK_NOT_FOUND));
+        .orElseThrow(() -> new ApiException(ErrorCode.BOOK_NOT_FOUND_INTERNAL));
     return bookMapper.toDto(book);
   }
 
@@ -48,4 +48,8 @@ public class BookService {
     return bookExternalClient.searchBooksByKeyword(keyword, limit);
   }
 
+  @Transactional(readOnly = true)
+  public BookResponseDto getBookDetailFromAladin(String isbn) {
+    return bookExternalClient.getBookByIsbnFromAladin(isbn);
+  }
 }

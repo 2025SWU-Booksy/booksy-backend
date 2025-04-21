@@ -42,4 +42,10 @@ public class BookController {
     List<BookResponseDto> result = bookService.searchBooksByKeyword(keyword, limit);
     return ResponseEntity.ok(result);
   }
+
+  @GetMapping("/aladin/{isbn}")
+  public ResponseEntity<BookResponseDto> getBookDetailFromAladin(@PathVariable String isbn) {
+    BookResponseDto result = bookService.getBookDetailFromAladin(isbn);
+    return ResponseEntity.ok(result);
+  }
 }

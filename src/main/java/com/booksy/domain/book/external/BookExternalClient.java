@@ -1,8 +1,10 @@
 package com.booksy.domain.book.external;
 
 import com.booksy.domain.book.dto.BookResponseDto;
-import com.booksy.domain.book.external.dto.AladinBookListResponseDto;
+import com.booksy.domain.book.external.dto.AladinItemResultDto;
 import com.booksy.domain.book.mapper.BookMapper;
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +45,8 @@ public class BookExternalClient {
         .queryParam("Version", "20131101")
         .toUriString();
 
-    AladinBookListResponseDto response =
-        restTemplate.getForObject(url, AladinBookListResponseDto.class);
+    AladinItemResultDto response =
+        restTemplate.getForObject(url, AladinItemResultDto.class);
 
     if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
       return Collections.emptyList();
@@ -53,4 +55,23 @@ public class BookExternalClient {
     return bookMapper.toDtoListFromAladin(response.getItem());
   }
 
+  public BookResponseDto getBookByIsbnFromAladin(String isbn) {
+    String url = UriComponentsBuilder.fromHttpUrl(
+            "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
+        .queryParam("ttbkey", apiKey)
+        .queryParam("itemIdType", "ISBN13")
+        .queryParam("ItemId", isbn)
+        .queryParam("output", "js")
+        .queryParam("Version", "20131101")
+        .toUriString();
+
+    AladinItemResultDto response = restTemplate.getForObject(url,
+        AladinItemResultDto.class);
+
+    if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
+      throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
+    }
+
+    return bookMapper.toDto(response.getItem().get(0));
+  }
 }
