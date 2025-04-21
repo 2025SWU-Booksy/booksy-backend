@@ -2,6 +2,10 @@ package com.booksy.domain.book.mapper;
 
 import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.entity.Book;
+import com.booksy.domain.book.external.dto.AladinItemDto;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -45,4 +49,45 @@ public class BookMapper {
         .collect(Collectors.toList());
   }
 
+
+  /**
+   * AladinItemDto → BookResponseDto 변환
+   */
+  public BookResponseDto toDto(AladinItemDto item) {
+    if (item == null) {
+      return null;
+    }
+
+    return BookResponseDto.builder()
+        .isbn(item.getIsbn13())
+        .title(item.getTitle())
+        .author(item.getAuthor())
+        .publisher(item.getPublisher())
+        .publishedDate(parseDate(item.getPubDate()))
+        .totalPage(item.getSubInfo() != null ? item.getSubInfo().getItemPage() : 0)
+        .build();
+  }
+
+  /**
+   * AladinItemDto 리스트 → BookResponseDto 리스트 변환
+   */
+  public List<BookResponseDto> toDtoListFromAladin(List<AladinItemDto> items) {
+    if (items == null) {
+      return Collections.emptyList();
+    }
+    return items.stream()
+        .map(this::toDto)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * 문자열 형태의 pubDate("yyyy-MM-dd") → LocalDate 변환
+   */
+  private LocalDate parseDate(String pubDate) {
+    try {
+      return LocalDate.parse(pubDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    } catch (Exception e) {
+      return null;
+    }
+  }
 }
