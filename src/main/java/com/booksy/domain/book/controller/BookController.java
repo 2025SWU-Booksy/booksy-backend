@@ -35,14 +35,16 @@ public class BookController {
    *
    * @param keyword 검색 키워드
    * @param limit   결과 개수 제한 (기본값 10)
+   * @param sort    검색 정렬 (기본값 정확도순)
    * @return 검색된 도서 목록
    */
   @GetMapping("/search")
   public ResponseEntity<List<BookResponseDto>> searchBooks(
       @RequestParam String keyword,
-      @RequestParam(defaultValue = "10") int limit
+      @RequestParam(defaultValue = "10") int limit,
+      @RequestParam(defaultValue = "accuracy") String sort
   ) {
-    List<BookResponseDto> result = bookService.searchBooksByKeyword(keyword, limit);
+    List<BookResponseDto> result = bookService.searchBooksByKeyword(keyword, limit, sort);
     return ResponseEntity.ok(result);
   }
 

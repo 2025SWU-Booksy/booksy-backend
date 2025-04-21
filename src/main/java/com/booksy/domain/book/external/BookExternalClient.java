@@ -2,6 +2,7 @@ package com.booksy.domain.book.external;
 
 import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.external.dto.AladinItemResultDto;
+import com.booksy.domain.book.external.type.AladinSortType;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
@@ -33,7 +34,9 @@ public class BookExternalClient {
    * @param maxResults 최대 검색 결과 수
    * @return BookResponseDto 리스트 (정제된 형태)
    */
-  public List<BookResponseDto> searchBooksByKeyword(String keyword, int maxResults) {
+  public List<BookResponseDto> searchBooksByKeyword(String keyword, int maxResults, String sort) {
+    String sortOption = AladinSortType.fromInput(sort);  // ← 변환
+
     String url = UriComponentsBuilder.fromHttpUrl(
             "https://www.aladin.co.kr/ttb/api/ItemSearch.aspx")
         .queryParam("ttbkey", apiKey)
@@ -41,6 +44,7 @@ public class BookExternalClient {
         .queryParam("QueryType", "Keyword")
         .queryParam("SearchTarget", "Book")
         .queryParam("MaxResults", maxResults)
+        .queryParam("Sort", sortOption)
         .queryParam("output", "js")
         .queryParam("Version", "20131101")
         .toUriString();

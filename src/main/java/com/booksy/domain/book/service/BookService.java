@@ -45,8 +45,8 @@ public class BookService {
    * @return BookResponseDto 리스트
    */
   @Transactional(readOnly = true)
-  public List<BookResponseDto> searchBooksByKeyword(String keyword, int limit) {
-    return bookExternalClient.searchBooksByKeyword(keyword, limit);
+  public List<BookResponseDto> searchBooksByKeyword(String keyword, int limit, String sort) {
+    return bookExternalClient.searchBooksByKeyword(keyword, limit, sort);
   }
 
   /**
