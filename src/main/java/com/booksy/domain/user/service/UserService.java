@@ -1,20 +1,28 @@
 package com.booksy.domain.user.service;
 
+import com.booksy.domain.user.dto.LoginRequest;
+import com.booksy.domain.user.dto.LoginResponse;
 import com.booksy.domain.user.dto.SignupRequest;
 import com.booksy.domain.user.dto.SignupResponse;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
+import com.booksy.global.util.JwtTokenProvider;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * 사용자 관련 비즈니스 로직 처리 클래스
+ */
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtTokenProvider jwtTokenProvider;
 
   /**
    * 회원가입 처리 - 이메일 중복 확인 - 닉네임 null이면 이메일로 대체 - 비밀번호 해시 - UserStatus는 ACTIVE로 설정 - 유저 저장 - 응답 메시지
@@ -52,5 +60,32 @@ public class UserService {
 
     // 응답 리턴
     return new SignupResponse(200, "SUCCESS", "회원가입이 성공했습니다.");
+  }
+
+  /**
+   * 로그인 처리
+   */
+
+  public LoginResponse login(LoginRequest request) {
+
+    // 이메일로 사용자 검색
+    Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+
+    if (userOptional.isEmpty()) {
+      return new LoginResponse(401, "FAIL", "존재하지 않는 이메일입니다.", null);
+    }
+
+    User user = userOptional.get();
+
+    // 비밀번호 검증
+    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+      return new LoginResponse(401, "FAIL", "비밀번호가 일치하지 않습니다.", null);
+    }
+
+    // JWT 토큰 생성
+    String token = jwtTokenProvider.generateToken(user.getId());
+
+    // 응답 반환
+    return new LoginResponse(200, "SUCCESS", "로그인 되었습니다.", token);
   }
 }

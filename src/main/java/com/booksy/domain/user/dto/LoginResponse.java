@@ -4,13 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 회원가입 처리 결과 dto
+ * 로그인 처리 결과 dto
  */
 @Getter
 @AllArgsConstructor
-public class SignupResponse {
+public class LoginResponse {
 
   private int code;
   private String result;
   private String message;
+  private String token; //로그인 성공하면 JWT 반환
 }
