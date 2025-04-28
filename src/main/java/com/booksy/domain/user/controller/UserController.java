@@ -71,4 +71,24 @@ public class UserController {
 
     return ResponseEntity.ok("내 정보 수정이 완료되었습니다.");
   }
+
+  /**
+   * 사용자 탈퇴 API
+   */
+  @PatchMapping("/users/me/inactive")
+  public ResponseEntity<String> deactivateUser(Authentication authentication) {
+    Integer userId = Integer.parseInt(authentication.getName());
+    userService.deactivateUser(userId);
+    return ResponseEntity.ok("회원 탈퇴 처리되었습니다.");
+  }
+
+  /**
+   * 사용자 복구 API
+   */
+  @PatchMapping("/users/me/restore")
+  public ResponseEntity<String> restoreUser(Authentication authentication) {
+    Integer userId = Integer.parseInt(authentication.getName());
+    userService.restoreUser(userId);
+    return ResponseEntity.ok("회원 복구 처리되었습니다.");
+  }
 }

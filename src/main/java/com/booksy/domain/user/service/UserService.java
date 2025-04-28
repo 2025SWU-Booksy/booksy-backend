@@ -5,6 +5,8 @@ import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
 import com.booksy.global.util.JwtTokenProvider;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -81,6 +83,17 @@ public class UserService {
       return new LoginResponse(401, "FAIL", "비밀번호가 일치하지 않습니다.", null);
     }
 
+    // INACTIVE 상태 체크
+    if (user.getStatus() == UserStatus.INACTIVE) {
+      // 삭제 예정일 계산: updatedAt + 7일
+      LocalDateTime deletionDate = user.getUpdatedAt().plusDays(7);
+      String formattedDate = deletionDate.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+      String message = formattedDate + "에 계정이 삭제됩니다. 복구하시겠습니까?";
+
+      // 응답 반환
+      return new LoginResponse(403, "INACTIVE", message, null);
+    }
+
     // JWT 토큰 생성
     String token = jwtTokenProvider.generateToken(user.getId());
 
@@ -143,6 +156,34 @@ public class UserService {
     // if (request.getPreferredGenres() != null)
 
     userRepository.save(user);
+  }
+
+  /**
+   * 사용자 탈퇴 처리
+   */
+  public void deactivateUser(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+    user.updateStatus(UserStatus.INACTIVE); // 상태를 INACTIVE로 변경
+    userRepository.save(user);
+  }
+
+  /**
+   * 사용자 복구 처리
+   */
+  public LoginResponse restoreUser(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+    user.updateStatus(UserStatus.ACTIVE); // 상태를 ACTIVE로 변경
+    userRepository.save(user);
+
+    // JWT 토큰 생성
+    String token = jwtTokenProvider.generateToken(user.getId());
+
+    // 응답 반환
+    return new LoginResponse(200, "SUCCESS", "계정이 복구되었습니다.", token);
   }
 
 }
