@@ -57,4 +57,23 @@ public class User {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private UserStatus status;  // ACTIVE, INACTIVE, DELETED
+
+  /**
+   * 정보 수정용
+   */
+  public void updatePassword(String newPassword) {
+    this.password = newPassword;
+  }
+
+  public void updateAge(Integer age) {
+    this.age = age;
+  }
+
+  public void updateGender(Gender gender) {
+    this.gender = gender;
+  }
+
+  public void updateNickname(String nickname) {
+    this.nickname = nickname;
+  }
 }

@@ -1,17 +1,16 @@
 package com.booksy.domain.user.service;
 
-import com.booksy.domain.user.dto.LoginRequest;
-import com.booksy.domain.user.dto.LoginResponse;
-import com.booksy.domain.user.dto.SignupRequest;
-import com.booksy.domain.user.dto.SignupResponse;
+import com.booksy.domain.user.dto.*;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
 import com.booksy.global.util.JwtTokenProvider;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자 관련 비즈니스 로직 처리 클래스
@@ -88,4 +87,62 @@ public class UserService {
     // 응답 반환
     return new LoginResponse(200, "SUCCESS", "로그인 되었습니다.", token);
   }
+
+  /**
+   * 내 정보 조회
+   */
+  public InfoResponse getMyInfo(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+    return InfoResponse.builder()
+        .email(user.getEmail())
+        .nickname(user.getNickname())
+        .age(user.getAge())
+        .gender(user.getGender())
+        .profileImage(user.getProfileImage())
+        // 선호장르
+        .build();
+  }
+
+  /**
+   * 사용자 정보 수정 새 비밀번호와 확인 비밀번호가 일치할 경우 비밀번호 변경, 정보값이 있을 때만 업데이트
+   */
+  @Transactional
+  public void updateUserInfo(Integer userId, UpdateUserRequest request) {
+    // 사용자 조회
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+
+    // 새 비밀번호가 입력됐을 때만 처리
+    if (request.getNewPassword() != null && request.getConfirmNewPassword() != null) {
+      if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+        throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+      }
+      // 비밀번호 암호화 후 저장
+      String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+      user.updatePassword(encodedPassword);
+    }
+
+    // 닉네임 업데이트
+    if (request.getNickname() != null) {
+      user.updateNickname(request.getNickname());
+    }
+
+    // 나이 업데이트
+    if (request.getAge() != null) {
+      user.updateAge(request.getAge());
+    }
+
+    // 성별 업데이트
+    if (request.getGender() != null) {
+      user.updateGender(request.getGender());
+    }
+
+    // 선호 장르
+    // if (request.getPreferredGenres() != null)
+
+    userRepository.save(user);
+  }
+
 }
