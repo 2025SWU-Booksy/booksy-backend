@@ -60,21 +60,30 @@ public class BookService {
     return bookExternalClient.getBookByIsbnFromAladin(isbn);
   }
 
+  /**
+   * ISBN으로 책 정보를 조회하고, 없으면 알라딘 API에서 가져와 저장
+   *
+   * 1. 내부 DB(Book 테이블)에서 ISBN으로 조회
+   * 2. 존재하지 않으면 → 알라딘 API 호출하여 책 정보를 가져옴
+   * 3. 가져온 정보를 Book 엔티티로 변환하여 DB에 저장
+   *
+   * @param isbn 조회할 도서의 ISBN
+   * @return Book 엔티티 (기존 또는 새로 저장된 값)
+   * @exception ApiException BOOK_NOT_FOUND_EXTERNAL (알라딘 API에 결과 없을 때)
+   */
   @Transactional
   public Book findOrCreateBookByIsbn(String isbn) {
     return bookRepository.findById(isbn)
         .orElseGet(() -> {
-          // 알라딘 API 호출해서 BookResponseDto 받아오기
+          // 알라딘 API 호출
           BookResponseDto externalBook = bookExternalClient.getBookByIsbnFromAladin(isbn);
 
           if (externalBook == null) {
             throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
           }
 
-          // 🔥 BookMapper를 이용해서 Book 엔티티로 변환
           Book newBook = bookMapper.toEntity(externalBook);
 
-          // 저장 후 반환
           return bookRepository.save(newBook);
         });
   }
