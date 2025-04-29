@@ -5,10 +5,12 @@ import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
 import com.booksy.global.util.JwtTokenProvider;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -184,6 +186,16 @@ public class UserService {
 
     // 응답 반환
     return new LoginResponse(200, "SUCCESS", "계정이 복구되었습니다.", token);
+  }
+
+  /**
+   * 현재 로그인한 사용자의 엔티티를 반환
+   */
+
+  public User getCurrentUser(Authentication authentication) {
+    String userId = authentication.getName(); // 토큰에 저장된 userId 추출
+    return userRepository.findById(Integer.parseInt(userId))
+        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
   }
 
 }
