@@ -59,4 +59,25 @@ public class BookService {
   public BookResponseDto getBookDetailFromAladin(String isbn) {
     return bookExternalClient.getBookByIsbnFromAladin(isbn);
   }
+
+  @Transactional
+  public Book findOrCreateBookByIsbn(String isbn) {
+    return bookRepository.findById(isbn)
+        .orElseGet(() -> {
+          // 알라딘 API 호출해서 BookResponseDto 받아오기
+          BookResponseDto externalBook = bookExternalClient.getBookByIsbnFromAladin(isbn);
+
+          if (externalBook == null) {
+            throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
+          }
+
+          // 🔥 BookMapper를 이용해서 Book 엔티티로 변환
+          Book newBook = bookMapper.toEntity(externalBook);
+
+          // 저장 후 반환
+          return bookRepository.save(newBook);
+        });
+  }
+
 }
+

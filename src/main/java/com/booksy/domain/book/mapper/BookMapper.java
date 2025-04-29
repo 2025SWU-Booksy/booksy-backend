@@ -50,6 +50,24 @@ public class BookMapper {
         .collect(Collectors.toList());
   }
 
+  /**
+   * BookResponseDto → Book 엔티티 변환
+   */
+  public Book toEntity(BookResponseDto dto) {
+    if (dto == null) {
+      return null;
+    }
+
+    return Book.builder()
+        .isbn(dto.getIsbn())
+        .title(dto.getTitle())
+        .author(dto.getAuthor())
+        .publisher(dto.getPublisher())
+        .publishedDate(dto.getPublishedDate())
+        .totalPage(dto.getTotalPage())
+        .imageUrl(dto.getImageUrl())
+        .build();
+  }
 
   /**
    * AladinItemDto → BookResponseDto 변환
