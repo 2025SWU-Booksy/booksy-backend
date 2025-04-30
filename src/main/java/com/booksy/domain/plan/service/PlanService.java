@@ -18,7 +18,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,12 +69,9 @@ public class PlanService {
    */
   @Transactional
   public PlanResponseDto createPlan(PlanCreateRequestDto requestDto) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-    // 🔥 (임시) userId=1인 사용자로 연결
-    User user = userRepository.findById(1)
-        .orElseThrow(() -> new UsernameNotFoundException("기본 사용자 없음"));
-//    User user = userService.getCurrentUser()
-//        .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHENTICATED));
+    User user = userService.getCurrentUser(authentication);
 
     Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
 
