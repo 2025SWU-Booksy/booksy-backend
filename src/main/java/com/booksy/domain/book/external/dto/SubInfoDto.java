@@ -6,4 +6,7 @@ import lombok.Data;
 public class SubInfoDto {
 
   private int itemPage;
+
+  private String fulldescription;
+  private String fulldescription2;
 }

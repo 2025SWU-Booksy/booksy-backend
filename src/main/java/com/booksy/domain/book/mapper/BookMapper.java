@@ -3,6 +3,7 @@ package com.booksy.domain.book.mapper;
 import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.external.dto.AladinItemDto;
+import com.booksy.domain.book.external.dto.SubInfoDto;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -77,6 +78,17 @@ public class BookMapper {
       return null;
     }
 
+    SubInfoDto sub = item.getSubInfo();
+    String description = null;
+
+    if (sub != null) {
+      if (sub.getFulldescription() != null && !sub.getFulldescription().isBlank()) {
+        description = sub.getFulldescription();
+      } else if (sub.getFulldescription2() != null && !sub.getFulldescription2().isBlank()) {
+        description = sub.getFulldescription2();
+      }
+    }
+
     return BookResponseDto.builder()
         .isbn(item.getIsbn13())
         .title(item.getTitle())
@@ -85,6 +97,7 @@ public class BookMapper {
         .publishedDate(parseDate(item.getPubDate()))
         .totalPage(item.getSubInfo() != null ? item.getSubInfo().getItemPage() : 0)
         .imageUrl(item.getCover())
+        .description(description)
         .build();
   }
 

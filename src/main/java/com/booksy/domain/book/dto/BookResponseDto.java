@@ -21,4 +21,5 @@ public class BookResponseDto {
   private int totalPage;
   private String imageUrl;
 
+  private String description;
 }
