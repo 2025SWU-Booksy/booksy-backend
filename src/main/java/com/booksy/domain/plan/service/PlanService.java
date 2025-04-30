@@ -10,7 +10,6 @@ import com.booksy.domain.plan.mapper.PlanMapper;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.user.entity.User;
-import com.booksy.domain.user.repository.UserRepository;
 import com.booksy.domain.user.service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +34,6 @@ public class PlanService {
   private final BookService bookService;
   private final PlanMapper planMapper;
   private final ObjectMapper objectMapper;
-  private final UserRepository userRepository;
 
   /**
    * 플랜 미리보기를 위한 계산 (DB 저장 없이 결과만 반환)
@@ -75,12 +73,14 @@ public class PlanService {
 
     Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
 
-    List<LocalDate> readingDates = calculateReadingDates(
-        requestDto.getStartDate(),
-        requestDto.getPeriodDays(),
-        requestDto.getExcludeDates(),
-        requestDto.getExcludeWeekdays()
-    );
+    List<LocalDate> readingDates = requestDto.getCalculatedDates() != null
+        ? requestDto.getCalculatedDates()
+        : calculateReadingDates(
+            requestDto.getStartDate(),
+            requestDto.getPeriodDays(),
+            requestDto.getExcludeDates(),
+            requestDto.getExcludeWeekdays()
+        );
 
     Plan plan = new Plan();
     plan.setUser(user);

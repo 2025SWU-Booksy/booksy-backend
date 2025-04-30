@@ -18,4 +18,9 @@ public class PlanCreateRequestDto {
   private Boolean isFreePlan;
   private List<LocalDate> excludeDates;
   private List<Integer> excludeWeekdays; // 0:일요일 ~ 6:토요일
+
+  // preview 결과 복사용 필드
+  private List<LocalDate> calculatedDates;
+  private Integer dailyMinutes;
+  private Integer dailyPages;
 }
