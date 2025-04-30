@@ -4,11 +4,15 @@ import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.service.PlanService;
+import com.booksy.domain.plan.type.PlanStatus;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -51,6 +55,20 @@ public class PlanController {
   ) {
     PlanResponseDto savedPlan = planService.createPlan(requestDto);
     return ResponseEntity.ok(savedPlan);
+  }
+
+  /**
+   * 플랜 목록 상태별 조회 API
+   *
+   * @param status 플랜 상태 (예: READING, COMPLETED)
+   * @return 해당 상태에 해당하는 플랜 목록
+   */
+  @GetMapping
+  public ResponseEntity<List<PlanResponseDto>> getPlansByStatus(
+      @RequestParam PlanStatus status
+  ) {
+    List<PlanResponseDto> plans = planService.getPlansByStatus(status);
+    return ResponseEntity.ok(plans);
   }
 
 }

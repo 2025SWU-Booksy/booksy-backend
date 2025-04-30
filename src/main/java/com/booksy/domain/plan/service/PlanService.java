@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -154,4 +155,22 @@ public class PlanService {
       throw new RuntimeException("JSON 변환 실패", e);
     }
   }
+
+  /**
+   * 현재 로그인한 사용자의 플랜 목록을 상태별로 조회
+   *
+   * @param status 조회할 플랜 상태 (예: READING, COMPLETED)
+   * @return 해당 상태에 해당하는 플랜 목록
+   */
+  @Transactional(readOnly = true)
+  public List<PlanResponseDto> getPlansByStatus(PlanStatus status) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    List<Plan> plans = planRepository.findAllByUserAndStatus(user, status);
+    return plans.stream()
+        .map(planMapper::toResponseDto)
+        .collect(Collectors.toList());
+  }
+
 }
