@@ -30,13 +30,14 @@ public class PlanMapper {
       int totalDays,
       List<LocalDate> readingDates) {
     return PlanPreviewResponseDto.builder()
+        .bookIsbn(book.getIsbn())
         .title(book.getTitle())
         .author(book.getAuthor())
         .publisher(book.getPublisher())
         .publishedDate(book.getPublishedDate())
         .totalPage(book.getTotalPage())
-        .dailyRecommendedPages(dailyPages)
-        .dailyRecommendedMinutes(dailyMinutes)
+        .dailyPages(dailyPages)
+        .dailyMinutes(dailyMinutes)
         .totalDurationDays(totalDays)
         .readingDates(readingDates)
         .build();

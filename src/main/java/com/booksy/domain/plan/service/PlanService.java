@@ -73,14 +73,16 @@ public class PlanService {
 
     Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
 
-    List<LocalDate> readingDates = requestDto.getCalculatedDates() != null
-        ? requestDto.getCalculatedDates()
+    List<LocalDate> readingDates = requestDto.getReadingDates() != null
+        ? requestDto.getReadingDates()
         : calculateReadingDates(
             requestDto.getStartDate(),
             requestDto.getPeriodDays(),
             requestDto.getExcludeDates(),
             requestDto.getExcludeWeekdays()
         );
+
+    Boolean isFreePlan = requestDto.getIsFreePlan();
 
     Plan plan = new Plan();
     plan.setUser(user);
@@ -89,7 +91,8 @@ public class PlanService {
     plan.setStartDate(requestDto.getStartDate());
     plan.setIsFreePlan(requestDto.getIsFreePlan());
     plan.setCurrentPage(0);
-    plan.setEndDate(requestDto.getIsFreePlan() ? null : readingDates.get(readingDates.size() - 1));
+    plan.setEndDate(
+        Boolean.TRUE.equals(isFreePlan) ? null : readingDates.get(readingDates.size() - 1));
     plan.setExcludedDates(convertListToJson(requestDto.getExcludeDates()));
     plan.setExcludedWeekdays(convertListToJson(requestDto.getExcludeWeekdays()));
 

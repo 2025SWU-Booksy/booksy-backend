@@ -12,14 +12,16 @@ import lombok.Data;
 @Builder
 public class PlanPreviewResponseDto {
 
+  private String bookIsbn;
   private String title;
   private String author;
   private String publisher;
   private LocalDate publishedDate;
   private int totalPage;
+  private Boolean isFreePlan;
 
-  private int dailyRecommendedPages;
-  private int dailyRecommendedMinutes;
+  private int dailyPages;
+  private int dailyMinutes;
   private int totalDurationDays;
 
   private List<LocalDate> readingDates;

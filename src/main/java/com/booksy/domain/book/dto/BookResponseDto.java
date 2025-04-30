@@ -20,6 +20,5 @@ public class BookResponseDto {
   private LocalDate publishedDate;
   private int totalPage;
   private String imageUrl;
-
   private String description;
 }
