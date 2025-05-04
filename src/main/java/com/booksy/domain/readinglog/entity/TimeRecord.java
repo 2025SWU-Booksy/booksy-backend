@@ -2,7 +2,6 @@ package com.booksy.domain.readinglog.entity;
 
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.user.entity.User;
-import com.booksy.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -14,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TimeRecord extends BaseTimeEntity {
+public class TimeRecord {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,9 +30,9 @@ public class TimeRecord extends BaseTimeEntity {
   @Column(name = "start_time", nullable = false)
   private LocalDateTime startTime;
 
-  @Column(name = "end_time", nullable = false)
+  @Column(name = "end_time", nullable = true)
   private LocalDateTime endTime;
 
-  @Column(name = "duration", nullable = false)
+  @Column(name = "duration", nullable = true)
   private int duration; // 총 읽은 시간 (분 단위)
 }
