@@ -61,15 +61,15 @@ public class UserController {
    * @return 수정 완료
    */
   @PatchMapping("/users/me")
-  public ResponseEntity<String> updateMyInfo(@RequestBody UpdateUserRequest request,
+  public ResponseEntity<UpdateUserResponse> updateMyInfo(@RequestBody UpdateUserRequest request,
       Authentication authentication) {
-    // JWT 토큰에서 userId 가져오기
     Integer userId = Integer.parseInt(authentication.getName());
 
-    // 서비스 호출 (수정)
-    userService.updateUserInfo(userId, request);
+    UpdateUserResponse response = userService.updateUserInfo(userId, request);
 
-    return ResponseEntity.ok("내 정보 수정이 완료되었습니다.");
+    return ResponseEntity
+        .status(response.getStatus())
+        .body(response);
   }
 
   /**

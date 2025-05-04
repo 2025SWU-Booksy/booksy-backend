@@ -85,6 +85,9 @@ public class UserService {
       return new LoginResponse(401, "FAIL", "비밀번호가 일치하지 않습니다.", null);
     }
 
+    // JWT 토큰 생성 (INACTIVE 상태에서도 토큰 발급)
+    String token = jwtTokenProvider.generateToken(user.getId());
+
     // INACTIVE 상태 체크
     if (user.getStatus() == UserStatus.INACTIVE) {
       // 삭제 예정일 계산: updatedAt + 7일
@@ -92,12 +95,9 @@ public class UserService {
       String formattedDate = deletionDate.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
       String message = formattedDate + "에 계정이 삭제됩니다. 복구하시겠습니까?";
 
-      // 응답 반환
-      return new LoginResponse(403, "INACTIVE", message, null);
+      // 응답 반환 (토큰 포함)
+      return new LoginResponse(403, "INACTIVE", message, token);
     }
-
-    // JWT 토큰 생성
-    String token = jwtTokenProvider.generateToken(user.getId());
 
     // 응답 반환
     return new LoginResponse(200, "SUCCESS", "로그인 되었습니다.", token);
@@ -121,43 +121,57 @@ public class UserService {
   }
 
   /**
-   * 사용자 정보 수정 새 비밀번호와 확인 비밀번호가 일치할 경우 비밀번호 변경, 정보값이 있을 때만 업데이트
+   * 사용자 정보 수정 비밀번호 변경 시 현재 비밀번호 확인 후 새 비밀번호로 변경 정보값이 있을 때만 업데이트
    */
   @Transactional
-  public void updateUserInfo(Integer userId, UpdateUserRequest request) {
-    // 사용자 조회
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+  public UpdateUserResponse updateUserInfo(Integer userId, UpdateUserRequest request) {
+    try {
+      // 사용자 조회
+      User user = userRepository.findById(userId)
+          .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
-    // 새 비밀번호가 입력됐을 때만 처리
-    if (request.getNewPassword() != null && request.getConfirmNewPassword() != null) {
-      if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
-        throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+      // 새 비밀번호가 입력됐을 때만 처리
+      if (request.getNewPassword() != null) {
+        // 현재 비밀번호 확인 필수
+        if (request.getCurrentPassword() == null) {
+          return new UpdateUserResponse(400, "FAIL", "비밀번호 변경을 위해서는 현재 비밀번호를 입력해야 합니다.");
+        }
+
+        // 현재 비밀번호 검증
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+          return new UpdateUserResponse(400, "FAIL", "현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 비밀번호 암호화 후 저장
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        user.updatePassword(encodedPassword);
       }
-      // 비밀번호 암호화 후 저장
-      String encodedPassword = passwordEncoder.encode(request.getNewPassword());
-      user.updatePassword(encodedPassword);
+
+      // 닉네임 업데이트
+      if (request.getNickname() != null) {
+        user.updateNickname(request.getNickname());
+      }
+
+      // 나이 업데이트
+      if (request.getAge() != null) {
+        user.updateAge(request.getAge());
+      }
+
+      // 성별 업데이트
+      if (request.getGender() != null) {
+        user.updateGender(request.getGender());
+      }
+
+      // 선호 장르
+      // if (request.getPreferredGenres() != null)
+
+      userRepository.save(user);
+
+      return new UpdateUserResponse(200, "SUCCESS", "사용자 정보가 업데이트되었습니다.");
+
+    } catch (UsernameNotFoundException e) {
+      return new UpdateUserResponse(404, "FAIL", e.getMessage());
     }
-
-    // 닉네임 업데이트
-    if (request.getNickname() != null) {
-      user.updateNickname(request.getNickname());
-    }
-
-    // 나이 업데이트
-    if (request.getAge() != null) {
-      user.updateAge(request.getAge());
-    }
-
-    // 성별 업데이트
-    if (request.getGender() != null) {
-      user.updateGender(request.getGender());
-    }
-
-    // 선호 장르
-    // if (request.getPreferredGenres() != null)
-
-    userRepository.save(user);
   }
 
   /**
@@ -174,18 +188,12 @@ public class UserService {
   /**
    * 사용자 복구 처리
    */
-  public LoginResponse restoreUser(Integer userId) {
+  public void restoreUser(Integer userId) {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
-    user.updateStatus(UserStatus.ACTIVE); // 상태를 ACTIVE로 변경
+    user.updateStatus(UserStatus.ACTIVE);
     userRepository.save(user);
-
-    // JWT 토큰 생성
-    String token = jwtTokenProvider.generateToken(user.getId());
-
-    // 응답 반환
-    return new LoginResponse(200, "SUCCESS", "계정이 복구되었습니다.", token);
   }
 
   /**
