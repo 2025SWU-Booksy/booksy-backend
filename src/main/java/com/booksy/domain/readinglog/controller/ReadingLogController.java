@@ -1,5 +1,6 @@
 package com.booksy.domain.readinglog.controller;
 
+import com.booksy.domain.readinglog.dto.UpdateLogResponseDto;
 import com.booksy.domain.readinglog.service.ReadingLogService;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +25,12 @@ public class ReadingLogController {
    */
 
   @PatchMapping("/{logId}")
-  public ResponseEntity<String> updateLog(@PathVariable Long logId,
+  public ResponseEntity<UpdateLogResponseDto> updateLog(@PathVariable Long logId,
       @RequestBody Map<String, String> request,
       Authentication authentication) {
-    readingLogService.updateReadingLog(logId, request.get("content"), authentication);
-    return ResponseEntity.ok("수정되었습니다.");
+    UpdateLogResponseDto response = readingLogService.updateReadingLog(logId,
+        request.get("content"), authentication);
+    return ResponseEntity.ok(response);
   }
 
   /**

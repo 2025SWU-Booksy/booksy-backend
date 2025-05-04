@@ -3,6 +3,8 @@ package com.booksy.domain.readinglog.service;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.readinglog.dto.ReadingLogRequestDto;
+import com.booksy.domain.readinglog.dto.ReadingLogResponseDto;
+import com.booksy.domain.readinglog.dto.UpdateLogResponseDto;
 import com.booksy.domain.readinglog.entity.ReadingLog;
 import com.booksy.domain.readinglog.mapper.ReadingLogMapper;
 import com.booksy.domain.readinglog.repository.ReadingLogRepository;
@@ -30,7 +32,8 @@ public class ReadingLogService {
    * @param dto    ContentType(ENUM), content
    * @param auth   토큰으로 사용자 인증
    */
-  public void createReadingLog(Long planId, ReadingLogRequestDto dto, Authentication auth) {
+  public ReadingLogResponseDto createReadingLog(Long planId, ReadingLogRequestDto dto,
+      Authentication auth) {
     if (dto.getContent() == null || dto.getContent().isBlank()) {
       throw new IllegalArgumentException("내용이 비어있습니다.");
     }
@@ -39,8 +42,11 @@ public class ReadingLogService {
     User user = userService.getCurrentUser(auth);
 
     ReadingLog log = readingLogMapper.toEntity(dto, user, plan);
-    readingLogRepository.save(log);
+    ReadingLog savedLog = readingLogRepository.save(log);
+
+    return readingLogMapper.toDto(savedLog);
   }
+
 
   /**
    * 플랜 존재 여부 확인
@@ -51,12 +57,14 @@ public class ReadingLogService {
   }
 
   /**
+   * 독서로그 수정
+   *
    * @param logId      독서로그 ID
    * @param newContent 변경할 내용
    * @param auth       토큰으로 사용자 인증
    */
   @Transactional
-  public void updateReadingLog(Long logId, String newContent, Authentication auth) {
+  public UpdateLogResponseDto updateReadingLog(Long logId, String newContent, Authentication auth) {
     User user = userService.getCurrentUser(auth);
     ReadingLog log = readingLogRepository.findById(logId)
         .orElseThrow(() -> new EntityNotFoundException("해당 로그가 없습니다."));
@@ -66,8 +74,15 @@ public class ReadingLogService {
     }
 
     log.setContent(newContent);
+    return readingLogMapper.toUpdateDto(log);
   }
 
+  /**
+   * 독서로그 삭제
+   *
+   * @param logId 독서로그 id
+   * @param auth  사용자 인증
+   */
   @Transactional
   public void deleteReadingLog(Long logId, Authentication auth) {
     User user = userService.getCurrentUser(auth);

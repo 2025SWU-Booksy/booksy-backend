@@ -1,6 +1,7 @@
 package com.booksy.domain.readinglog.controller;
 
 import com.booksy.domain.readinglog.dto.ReadingLogRequestDto;
+import com.booksy.domain.readinglog.dto.ReadingLogResponseDto;
 import com.booksy.domain.readinglog.service.ReadingLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/plans/{planId}/logs")
+@RequestMapping("api/plans/{planId}/logs")
 public class ReadingLogPlanController {
 
   private final ReadingLogService readingLogService;
@@ -23,10 +24,12 @@ public class ReadingLogPlanController {
    * @return 등록 메시지
    */
   @PostMapping
-  public ResponseEntity<String> createReadingLog(@PathVariable Long planId,
+  public ResponseEntity<ReadingLogResponseDto> createReadingLog(@PathVariable Long planId,
       @RequestBody ReadingLogRequestDto dto,
       Authentication authentication) {
-    readingLogService.createReadingLog(planId, dto, authentication);
-    return ResponseEntity.ok("등록되었습니다.");
+
+    ReadingLogResponseDto response = readingLogService.createReadingLog(planId, dto,
+        authentication);
+    return ResponseEntity.ok(response);
   }
 }

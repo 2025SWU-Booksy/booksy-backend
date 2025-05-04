@@ -36,7 +36,4 @@ public class ReadingLog extends BaseTimeEntity {
   @Column(columnDefinition = "TEXT")
   private String content; // 리뷰 본문 or 추출 텍스트
 
-  @Column(name = "image_url")
-  private String imageUrl; // 스크랩일 경우 이미지 경로
-
 }
