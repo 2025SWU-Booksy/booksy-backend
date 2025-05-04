@@ -3,6 +3,8 @@ package com.booksy.domain.readinglog.controller;
 import com.booksy.domain.readinglog.dto.ReadingLogRequestDto;
 import com.booksy.domain.readinglog.dto.ReadingLogResponseDto;
 import com.booksy.domain.readinglog.service.ReadingLogService;
+import com.booksy.domain.readinglog.type.ContentType;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,6 +32,24 @@ public class ReadingLogPlanController {
 
     ReadingLogResponseDto response = readingLogService.createReadingLog(planId, dto,
         authentication);
+    return ResponseEntity.ok(response);
+  }
+
+  /**
+   * 특정 플랜에 속한 리뷰 or 스크랩 로그 리스트를 조회하는 API
+   *
+   * @param planId      조회 대상 플랜 ID
+   * @param contentType 필터링할 로그 타입 (REVIEW or SCRAP)
+   * @return 필터링된 로그 목록 리스트
+   */
+  @GetMapping
+  public ResponseEntity<List<ReadingLogResponseDto>> getLogsByType(
+      @PathVariable Long planId,
+      @RequestParam("type") ContentType contentType,
+      Authentication authentication) {
+
+    List<ReadingLogResponseDto> response = readingLogService.getLogsByPlanAndType(planId,
+        contentType, authentication);
     return ResponseEntity.ok(response);
   }
 }

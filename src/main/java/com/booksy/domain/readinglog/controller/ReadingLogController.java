@@ -1,7 +1,13 @@
 package com.booksy.domain.readinglog.controller;
 
+import com.booksy.domain.readinglog.dto.ReadingLogResponseDto;
+import com.booksy.domain.readinglog.dto.ScrapBookResponseDto;
+import com.booksy.domain.readinglog.dto.ScrapResponseDto;
 import com.booksy.domain.readinglog.dto.UpdateLogResponseDto;
 import com.booksy.domain.readinglog.service.ReadingLogService;
+import com.booksy.domain.user.entity.User;
+import com.booksy.domain.user.service.UserService;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReadingLogController {
 
   private final ReadingLogService readingLogService;
+  private final UserService userService;
 
   /**
    * 독서로그를 수정하는 API
@@ -45,5 +52,51 @@ public class ReadingLogController {
       Authentication authentication) {
     readingLogService.deleteReadingLog(logId, authentication);
     return ResponseEntity.ok("삭제되었습니다.");
+  }
+
+  /**
+   * 특정 독서로그 단건 조회 API
+   *
+   * @param logId          조회할 로그 ID
+   * @param authentication 현재 로그인 사용자 정보
+   * @return 해당 로그의 상세 정보
+   */
+  @GetMapping("/{logId}")
+  public ResponseEntity<ReadingLogResponseDto> getLogById(
+      @PathVariable Long logId,
+      Authentication authentication) {
+
+    ReadingLogResponseDto response = readingLogService.getLogById(logId, authentication);
+    return ResponseEntity.ok(response);
+  }
+
+  /**
+   * 전체 스크랩 목록 조회 API
+   *
+   * @param authentication JWT 토큰 기반 로그인 사용자 정보
+   * @return ScrapResponseDto 리스트 (id, content, 책 제목, 작가, 생성일)
+   */
+  @GetMapping("/scraps")
+  public ResponseEntity<List<ScrapResponseDto>> getAllScraps(Authentication authentication) {
+    List<ScrapResponseDto> response = readingLogService.getAllScraps(authentication);
+    return ResponseEntity.ok(response);
+  }
+
+  /**
+   * 도서 기준으로 그룹화된 스크랩 요약 목록을 조회하는 API
+   *
+   * @param sort           정렬 기준 (latest, oldest, count)
+   * @param authentication JWT 인증 정보 (userId 추출용)
+   * @return 도서별 스크랩 요약 리스트
+   */
+  @GetMapping("/scraps/group")
+  public ResponseEntity<List<ScrapBookResponseDto>> getScrapSummaryGroup(
+      @RequestParam(defaultValue = "latest") String sort,
+      Authentication authentication) {
+
+    User user = userService.getCurrentUser(authentication);
+    List<ScrapBookResponseDto> result = readingLogService.getScrapSummaryGroup(user.getId(), sort);
+
+    return ResponseEntity.ok(result);
   }
 }

@@ -2,15 +2,18 @@ package com.booksy.domain.readinglog.service;
 
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.repository.PlanRepository;
-import com.booksy.domain.readinglog.dto.ReadingLogRequestDto;
-import com.booksy.domain.readinglog.dto.ReadingLogResponseDto;
-import com.booksy.domain.readinglog.dto.UpdateLogResponseDto;
+import com.booksy.domain.readinglog.dto.*;
 import com.booksy.domain.readinglog.entity.ReadingLog;
 import com.booksy.domain.readinglog.mapper.ReadingLogMapper;
 import com.booksy.domain.readinglog.repository.ReadingLogRepository;
+import com.booksy.domain.readinglog.type.ContentType;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -35,7 +38,7 @@ public class ReadingLogService {
   public ReadingLogResponseDto createReadingLog(Long planId, ReadingLogRequestDto dto,
       Authentication auth) {
     if (dto.getContent() == null || dto.getContent().isBlank()) {
-      throw new IllegalArgumentException("내용이 비어있습니다.");
+      throw new ApiException(ErrorCode.FIELD_REQUIRED);
     }
 
     Plan plan = getPlan(planId);
@@ -53,7 +56,7 @@ public class ReadingLogService {
    */
   private Plan getPlan(Long planId) {
     return planRepository.findById(planId)
-        .orElseThrow(() -> new EntityNotFoundException("해당 플랜이 존재하지 않습니다. ID: " + planId));
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
   }
 
   /**
@@ -67,10 +70,10 @@ public class ReadingLogService {
   public UpdateLogResponseDto updateReadingLog(Long logId, String newContent, Authentication auth) {
     User user = userService.getCurrentUser(auth);
     ReadingLog log = readingLogRepository.findById(logId)
-        .orElseThrow(() -> new EntityNotFoundException("해당 로그가 없습니다."));
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
 
     if (newContent == null || newContent.isBlank()) {
-      throw new IllegalArgumentException("내용이 비어 있습니다.");
+      throw new ApiException(ErrorCode.FIELD_REQUIRED);
     }
 
     log.setContent(newContent);
@@ -87,8 +90,113 @@ public class ReadingLogService {
   public void deleteReadingLog(Long logId, Authentication auth) {
     User user = userService.getCurrentUser(auth);
     ReadingLog log = readingLogRepository.findById(logId)
-        .orElseThrow(() -> new EntityNotFoundException("해당 로그가 없습니다."));
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
 
     readingLogRepository.delete(log);
   }
+
+  /**
+   * 특정 플랜에 포함된 독서로그 중, 요청한 타입(SCRAP or REVIEW)만 필터링하여 반환
+   *
+   * @param planId      조회할 플랜 ID
+   * @param contentType 조회할 로그 타입 (SCRAP or REVIEW)
+   * @return 필터링된 독서로그 리스트 (DTO)
+   * @throws ApiException 권한이 없는 사용자가 접근 시 예외 발생
+   */
+  @Transactional(readOnly = true)
+  public List<ReadingLogResponseDto> getLogsByPlanAndType(Long planId, ContentType contentType,
+      Authentication auth) {
+    User currentUser = userService.getCurrentUser(auth);
+
+    Plan plan = planRepository.findById(planId)
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+
+    if (!plan.getUser().getId().equals(currentUser.getId())) {
+      throw new ApiException(ErrorCode.UNAUTHORIZED_ACCESS);
+    }
+
+    List<ReadingLog> logs = readingLogRepository.findAllByPlanIdAndContentType(planId, contentType);
+    return logs.stream()
+        .map(readingLogMapper::toDto)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * 독서로그 단건 조회 - 로그 ID로 하나의 독서로그(리뷰 or 스크랩)를 조회
+   *
+   * @param logId 조회할 독서로그의 ID
+   * @param auth  로그인한 사용자 인증 정보 (JWT)
+   * @return 해당 독서로그의 응답 DTO
+   * @throws ApiException 권한이 없는 사용자가 접근 시 예외 발생
+   */
+  @Transactional(readOnly = true)
+  public ReadingLogResponseDto getLogById(Long logId, Authentication auth) {
+    User currentUser = userService.getCurrentUser(auth);
+
+    ReadingLog log = readingLogRepository.findById(logId)
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+
+    if (!log.getUser().getId().equals(currentUser.getId())) {
+      throw new ApiException(ErrorCode.UNAUTHORIZED_ACCESS);
+    }
+
+    return readingLogMapper.toDto(log);
+  }
+
+  /**
+   * 전체 스크랩 로그 조회 - contentType = SCRAP 인 항목만 필터링 - 책 제목과 작가는 plan → book 관계 통해 조회
+   *
+   * @param auth 로그인 사용자 인증 정보
+   * @return 스크랩 응답 DTO 리스트
+   */
+  @Transactional(readOnly = true)
+  public List<ScrapResponseDto> getAllScraps(Authentication auth) {
+    User currentUser = userService.getCurrentUser(auth);
+
+    List<ReadingLog> logs = readingLogRepository
+        .findAllByUserIdAndContentType(currentUser.getId(), ContentType.SCRAP);
+
+    return logs.stream()
+        .map(log -> ScrapResponseDto.builder()
+            .id(log.getId())
+            .content(log.getContent())
+            .bookTitle(log.getPlan().getBook().getTitle())
+            .author(log.getPlan().getBook().getAuthor())
+            .readingDate(log.getCreatedAt())
+            .build())
+        .toList();
+  }
+
+  /**
+   * 도서 기준으로 그룹화된 스크랩 요약 목록을 정렬하여 반환
+   *
+   * @param userId 로그인한 사용자 ID
+   * @param sort   정렬 기준: latest(기본), oldest, count(스크랩 수)
+   * @return ScrapBookResponseDto 리스트
+   */
+  public List<ScrapBookResponseDto> getScrapSummaryGroup(Integer userId, String sort) {
+    List<ScrapBookResponseDto> list = readingLogRepository.findScrapGroupedByBook(userId);
+
+    switch (sort.toLowerCase()) {
+      case "count":
+        // 스크랩 수 내림차순
+        list.sort(Comparator.comparingLong(ScrapBookResponseDto::getScrapCount).reversed());
+        break;
+      case "oldest":
+        // 최신 스크랩 시각 오름차순
+        list.sort(Comparator.comparing(ScrapBookResponseDto::getLatestScrap));
+        break;
+      case "latest":
+      default:
+        // 최신 스크랩 시각 내림차순 (기본값)
+        list.sort(Comparator.comparing(ScrapBookResponseDto::getLatestScrap).reversed());
+        break;
+    }
+
+    return list;
+  }
+
+
 }
+
+

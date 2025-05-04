@@ -1,17 +1,24 @@
 package com.booksy.domain.readinglog.dto;
 
-import lombok.Builder;
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 도서별 스크랩 조회 결과 dto
  */
 @Getter
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ScrapBookResponseDto {
 
+  private Long planId;
   private String bookTitle;
   private String author;
   private String imageUrl;
-  private int scrapCount; //한 도서의 총 스크랩 수
+  private long scrapCount;
+  private LocalDateTime latestScrap;
 }
+
+
