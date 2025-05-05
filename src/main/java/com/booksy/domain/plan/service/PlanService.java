@@ -90,7 +90,11 @@ public class PlanService {
     plan.setUser(user);
     plan.setBook(book);
     plan.setStatus(PlanStatus.READING);
-    plan.setStartDate(requestDto.getStartDate());
+    plan.setStartDate(
+        requestDto.getStartDate() != null
+            ? requestDto.getStartDate()
+            : readingDates.get(0)
+    );
     plan.setIsFreePlan(requestDto.getIsFreePlan());
     plan.setCurrentPage(0);
     plan.setEndDate(
