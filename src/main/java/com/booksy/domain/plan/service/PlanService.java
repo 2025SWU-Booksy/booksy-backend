@@ -225,4 +225,50 @@ public class PlanService {
     return planMapper.toDetailDto(plan);
   }
 
+  /**
+   * 해당 월에 진행 중인 모든 플랜 목록 조회 (캘린더 표시용)
+   *
+   * 주어진 연도와 월 기준으로, 그 달에 시작되었거나 진행 중인 모든 플랜을 반환한다.
+   * 제외 날짜는 고려하지 않고, 플랜의 시작일과 종료일 범위를 기준으로 조회한다.
+   *
+   * @param year  조회할 연도 (예: 2025)
+   * @param month 조회할 월 (1~12)
+   * @return PlanSummaryResponseDto 리스트 (플랜 요약 정보)
+   */
+  @Transactional(readOnly = true)
+  public List<PlanSummaryResponseDto> getPlansForCalendar(int year, int month) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    LocalDate startOfMonth = LocalDate.of(year, month, 1);
+    LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
+
+    List<Plan> plans = planRepository
+        .findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, endOfMonth,
+            startOfMonth);
+
+    return plans.stream()
+        .map(planMapper::toSummaryDto)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * 특정 날짜에 진행 중인 플랜 목록 조회
+   *
+   * @param date 조회할 날짜 (YYYY-MM-DD)
+   * @return 해당 날짜에 진행 중인 플랜들의 요약 정보 목록
+   */
+  @Transactional(readOnly = true)
+  public List<PlanSummaryResponseDto> getPlansByDate(LocalDate date) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    List<Plan> plans = planRepository
+        .findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
+
+    return plans.stream()
+        .map(planMapper::toSummaryDto)
+        .collect(Collectors.toList());
+  }
+
 }

@@ -7,8 +7,10 @@ import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.service.PlanService;
 import com.booksy.domain.plan.type.PlanStatus;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -94,6 +96,32 @@ public class PlanController {
   public ResponseEntity<PlanDetailResponseDto> getPlanDetail(@PathVariable Long planId) {
     PlanDetailResponseDto responseDto = planService.getPlanDetail(planId);
     return ResponseEntity.ok(responseDto);
+  }
+
+  /**
+   * 달력에 표시할 플랜 목록 조회
+   *
+   * @param year  연도
+   * @param month 월 (1~12)
+   * @return 해당 월 동안 진행되는 플랜 리스트
+   */
+  @GetMapping("/calendar")
+  public ResponseEntity<List<PlanSummaryResponseDto>> getPlansForCalendar(
+      @RequestParam int year,
+      @RequestParam int month) {
+    return ResponseEntity.ok(planService.getPlansForCalendar(year, month));
+  }
+
+  /**
+   * 특정 날짜에 진행 중인 플랜 조회
+   *
+   * @param date 날짜 (형식: yyyy-MM-dd)
+   * @return 해당 날짜에 진행 중인 플랜 리스트
+   */
+  @GetMapping("/calendar/{date}")
+  public ResponseEntity<List<PlanSummaryResponseDto>> getPlansByDate(
+      @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    return ResponseEntity.ok(planService.getPlansByDate(date));
   }
 
 }

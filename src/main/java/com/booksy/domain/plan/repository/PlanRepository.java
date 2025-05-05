@@ -22,5 +22,8 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
   // 플랜 상세 조회
   Optional<Plan> findByIdAndUser(Long planId, User user);
-
+  
+  // 특정 날짜가 플랜 진행 기간에 포함되는 경우 조회 (user 기준)
+  List<Plan> findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+      User user, LocalDate date1, LocalDate date2);
 }
