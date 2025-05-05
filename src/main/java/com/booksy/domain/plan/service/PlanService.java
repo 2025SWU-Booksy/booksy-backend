@@ -3,6 +3,7 @@ package com.booksy.domain.plan.service;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.service.BookService;
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
+import com.booksy.domain.plan.dto.PlanDetailResponseDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
@@ -12,6 +13,8 @@ import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.service.UserService;
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
@@ -101,6 +104,8 @@ public class PlanService {
         Boolean.TRUE.equals(isFreePlan) ? null : readingDates.get(readingDates.size() - 1));
     plan.setExcludedDates(convertListToJson(requestDto.getExcludeDates()));
     plan.setExcludedWeekdays(convertListToJson(requestDto.getExcludeWeekdays()));
+    plan.setDailyPages(requestDto.getDailyPages());
+    plan.setDailyMinutes(requestDto.getDailyMinutes());
 
     Plan savedPlan = planRepository.save(plan);
     return planMapper.toResponseDto(savedPlan);
@@ -201,6 +206,23 @@ public class PlanService {
     return plans.stream()
         .map(planMapper::toSummaryDto)
         .collect(Collectors.toList());
+  }
+
+  /**
+   * 플랜 상세 정보 조회
+   *
+   * @param planId 플랜 ID
+   * @return PlanDetailResponseDto 상세 정보 응답
+   */
+  @Transactional(readOnly = true)
+  public PlanDetailResponseDto getPlanDetail(Long planId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    Plan plan = planRepository.findByIdAndUser(planId, user)
+        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+
+    return planMapper.toDetailDto(plan);
   }
 
 }

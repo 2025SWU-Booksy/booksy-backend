@@ -37,6 +37,10 @@ public enum ErrorCode {
   BOOK_NOT_FOUND_INTERNAL(404, "B001", "Book not found", LogLevel.WARN),
   BOOK_NOT_FOUND_EXTERNAL(404, "B002", "Book not found from Aladin API", LogLevel.WARN),
 
+  // PLAN
+  PLAN_NOT_FOUND(404, "P001", "Plan not found", LogLevel.WARN),
+
+
   // SECURE
   UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN);
 

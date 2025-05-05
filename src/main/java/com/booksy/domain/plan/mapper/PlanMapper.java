@@ -1,6 +1,7 @@
 package com.booksy.domain.plan.mapper;
 
 import com.booksy.domain.book.entity.Book;
+import com.booksy.domain.plan.dto.PlanDetailResponseDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
@@ -60,7 +61,7 @@ public class PlanMapper {
         .endDate(plan.getEndDate())
         .build();
   }
-  
+
   /**
    * Plan 엔티티를 메인 요약 응답 Dto로 변환
    *
@@ -86,4 +87,37 @@ public class PlanMapper {
         .totalReadingTime(null)
         .build();
   }
+
+  /**
+   * Plan 엔티티를 상세 응답 DTO로 변환
+   *
+   * @param plan Plan 엔티티
+   * @return PlanDetailResponseDto (책 + 플랜 상세 정보)
+   */
+  public PlanDetailResponseDto toDetailDto(Plan plan) {
+    Book book = plan.getBook();
+
+    int totalPage = book.getTotalPage();
+    int currentPage = plan.getCurrentPage() != null ? plan.getCurrentPage() : 0;
+    int progressRate = totalPage == 0 ? 0 : (int) (((double) currentPage / totalPage) * 100);
+
+    return PlanDetailResponseDto.builder()
+        .planId(plan.getId())
+        .bookTitle(book.getTitle())
+        .author(book.getAuthor())
+        .publisher(book.getPublisher())
+        .publishedDate(book.getPublishedDate() != null ? book.getPublishedDate().toString() : null)
+        .imageUrl(book.getImageUrl())
+        .totalPage(totalPage)
+
+        .startDate(plan.getStartDate())
+        .endDate(plan.getEndDate())
+        .currentPage(currentPage)
+        .dailyPages(plan.getDailyPages() != null ? plan.getDailyPages() : 0)
+        .dailyMinutes(plan.getDailyMinutes() != null ? plan.getDailyMinutes() : 0)
+        .progressRate(progressRate)
+        .status(plan.getStatus())
+        .build();
+  }
+
 }

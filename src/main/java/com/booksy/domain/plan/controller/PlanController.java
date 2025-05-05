@@ -1,6 +1,7 @@
 package com.booksy.domain.plan.controller;
 
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
+import com.booksy.domain.plan.dto.PlanDetailResponseDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
@@ -10,6 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -80,6 +82,18 @@ public class PlanController {
   @GetMapping("/summary")
   public ResponseEntity<List<PlanSummaryResponseDto>> getTodayPlans() {
     return ResponseEntity.ok(planService.getTodayPlanSummaries());
+  }
+
+  /**
+   * 특정 플랜 상세 정보 조회
+   *
+   * @param planId 플랜 ID
+   * @return 플랜 상세 응답 DTO
+   */
+  @GetMapping("/{planId}")
+  public ResponseEntity<PlanDetailResponseDto> getPlanDetail(@PathVariable Long planId) {
+    PlanDetailResponseDto responseDto = planService.getPlanDetail(planId);
+    return ResponseEntity.ok(responseDto);
   }
 
 }

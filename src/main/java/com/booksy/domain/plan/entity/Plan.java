@@ -60,4 +60,13 @@ public class Plan extends BaseTimeEntity {
 
   @Column(name = "excluded_weekdays", columnDefinition = "TEXT")
   private String excludedWeekdays; // JSON string (e.g., [0,6])
+
+  // 하루 권장 독서 페이지 수
+  @Column(name = "daily_pages")
+  private Integer dailyPages;
+
+  // 하루 권장 독서 시간 (단위: 분)
+  @Column(name = "daily_minutes")
+  private Integer dailyMinutes;
+
 }
