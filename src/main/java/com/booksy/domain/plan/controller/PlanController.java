@@ -67,6 +67,16 @@ public class PlanController {
   }
 
   /**
+   * 전체 플랜 목록 조회
+   *
+   * @return 로그인 사용자의 모든 플랜
+   */
+  @GetMapping("/all")
+  public ResponseEntity<List<PlanResponseDto>> getAllPlans() {
+    return ResponseEntity.ok(planService.getAllPlans());
+  }
+
+  /**
    * 플랜 목록 상태별 조회 API
    *
    * @param status 플랜 상태 (예: READING, COMPLETED)

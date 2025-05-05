@@ -166,6 +166,22 @@ public class PlanService {
   }
 
   /**
+   * 현재 로그인한 사용자의 플랜 목록을 모두 조회
+   *
+   * @return 전체 플랜 목록
+   */
+  @Transactional(readOnly = true)
+  public List<PlanResponseDto> getAllPlans() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    List<Plan> plans = planRepository.findAllByUser(user);
+    return plans.stream()
+        .map(planMapper::toResponseDto)
+        .collect(Collectors.toList());
+  }
+
+  /**
    * 현재 로그인한 사용자의 플랜 목록을 상태별로 조회
    *
    * @param status 조회할 플랜 상태 (예: READING, COMPLETED)

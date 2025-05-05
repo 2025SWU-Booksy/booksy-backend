@@ -16,6 +16,9 @@ import org.springframework.data.repository.query.Param;
  */
 public interface PlanRepository extends JpaRepository<Plan, Long> {
 
+  // 전체 플랜 조회
+  List<Plan> findAllByUser(User user);
+
   // 상태별 플랜 조회
   List<Plan> findAllByUserAndStatus(User user, PlanStatus status);
 
