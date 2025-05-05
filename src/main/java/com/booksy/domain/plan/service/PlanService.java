@@ -5,6 +5,7 @@ import com.booksy.domain.book.service.BookService;
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
+import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.mapper.PlanMapper;
 import com.booksy.domain.plan.repository.PlanRepository;
@@ -170,6 +171,31 @@ public class PlanService {
     List<Plan> plans = planRepository.findAllByUserAndStatus(user, status);
     return plans.stream()
         .map(planMapper::toResponseDto)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * 오늘 날짜 기준으로 진행 중인 플랜 목록 요약 조회
+   *
+   * 조건:
+   * - 로그인 사용자 기준
+   * - PlanStatus가 READING
+   * - startDate ≤ 오늘 ≤ endDate
+   *
+   * @return List<PlanSummaryResponseDto> 오늘 읽을 책 리스트
+   */
+  @Transactional(readOnly = true)
+  public List<PlanSummaryResponseDto> getTodayPlanSummaries() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(auth);
+    LocalDate today = LocalDate.now();
+
+    List<Plan> plans =
+        planRepository.findByUserAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+            user, PlanStatus.READING, today, today);
+
+    return plans.stream()
+        .map(planMapper::toSummaryDto)
         .collect(Collectors.toList());
   }
 

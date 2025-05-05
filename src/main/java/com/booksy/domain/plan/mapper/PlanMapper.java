@@ -3,6 +3,7 @@ package com.booksy.domain.plan.mapper;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
+import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.entity.Plan;
 import java.time.LocalDate;
 import java.util.List;
@@ -57,6 +58,32 @@ public class PlanMapper {
         .status(plan.getStatus())
         .startDate(plan.getStartDate())
         .endDate(plan.getEndDate())
+        .build();
+  }
+  
+  /**
+   * Plan 엔티티를 메인 요약 응답 Dto로 변환
+   *
+   * @param plan Plan 엔티티
+   * @return PlanSummaryResponseDto (오늘 읽을 책 정보 요약)
+   */
+  public PlanSummaryResponseDto toSummaryDto(Plan plan) {
+    Book book = plan.getBook();
+    int current = plan.getCurrentPage();
+    int total = book.getTotalPage();
+    int progress = (total == 0) ? 0 : (int) Math.round((double) current / total * 100);
+
+    return PlanSummaryResponseDto.builder()
+        .planId(plan.getId())
+        .bookTitle(book.getTitle())
+        .author(book.getAuthor())
+        .imageUrl(book.getImageUrl())
+        .startDate(plan.getStartDate())
+        .endDate(plan.getEndDate())
+        .currentPage(current)
+        .totalPage(total)
+        .progressRate(progress)
+        .totalReadingTime(null)
         .build();
   }
 }

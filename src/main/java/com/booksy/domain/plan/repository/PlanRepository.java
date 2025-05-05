@@ -3,6 +3,7 @@ package com.booksy.domain.plan.repository;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.user.entity.User;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,6 +12,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface PlanRepository extends JpaRepository<Plan, Long> {
 
+  // 상태별 플랜 조회
   List<Plan> findAllByUserAndStatus(User user, PlanStatus status);
 
+  // 오늘 날짜에 해당하는 READING 상태 플랜 조회 (오늘 읽을 책)
+  List<Plan> findByUserAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+      User user, PlanStatus status, LocalDate today1, LocalDate today2);
 }

@@ -3,6 +3,7 @@ package com.booksy.domain.plan.controller;
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
+import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.service.PlanService;
 import com.booksy.domain.plan.type.PlanStatus;
 import java.util.List;
@@ -69,6 +70,16 @@ public class PlanController {
   ) {
     List<PlanResponseDto> plans = planService.getPlansByStatus(status);
     return ResponseEntity.ok(plans);
+  }
+
+  /**
+   * 오늘 읽을 책 요약 정보 조회 API
+   *
+   * @return 오늘 읽을 플랜 목록
+   */
+  @GetMapping("/summary")
+  public ResponseEntity<List<PlanSummaryResponseDto>> getTodayPlans() {
+    return ResponseEntity.ok(planService.getTodayPlanSummaries());
   }
 
 }
