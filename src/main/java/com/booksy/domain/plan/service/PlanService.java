@@ -102,8 +102,7 @@ public class PlanService {
     plan.setCurrentPage(0);
     plan.setEndDate(
         Boolean.TRUE.equals(isFreePlan) ? null : readingDates.get(readingDates.size() - 1));
-    plan.setExcludedDates(convertListToJson(requestDto.getExcludeDates()));
-    plan.setExcludedWeekdays(convertListToJson(requestDto.getExcludeWeekdays()));
+    plan.setReadingDates(convertListToJson(readingDates));
     plan.setDailyPages(requestDto.getDailyPages());
     plan.setDailyMinutes(requestDto.getDailyMinutes());
 

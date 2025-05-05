@@ -55,11 +55,8 @@ public class Plan extends BaseTimeEntity {
   @Column(name = "is_free_plan")
   private Boolean isFreePlan;
 
-  @Column(name = "excluded_dates", columnDefinition = "TEXT")
-  private String excludedDates; // JSON string (e.g., ["2025-05-03", "2025-05-06"])
-
-  @Column(name = "excluded_weekdays", columnDefinition = "TEXT")
-  private String excludedWeekdays; // JSON string (e.g., [0,6])
+  @Column(name = "reading_dates", columnDefinition = "TEXT")
+  private String readingDates; // LocalDate 리스트를 JSON으로 변환해서 저장
 
   // 하루 권장 독서 페이지 수
   @Column(name = "daily_pages")
