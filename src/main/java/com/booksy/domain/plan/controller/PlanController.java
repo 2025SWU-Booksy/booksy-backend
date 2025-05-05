@@ -14,6 +14,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -152,6 +153,30 @@ public class PlanController {
       @RequestBody @Valid PlanExtendRequestDto requestDto) {
     planService.extendPlan(planId, requestDto.getNewEndDate());
     return ResponseEntity.ok().build();
+  }
+
+  /**
+   * 플랜 단일 삭제 API
+   *
+   * @param id 삭제할 플랜 ID
+   * @return 204 No Content
+   */
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deletePlan(@PathVariable Long id) {
+    planService.deletePlan(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * 플랜 다중 삭제 API
+   *
+   * @param ids 삭제할 플랜 ID 리스트 (예: ?ids=1,2,3)
+   * @return 204 No Content
+   */
+  @DeleteMapping
+  public ResponseEntity<Void> deletePlans(@RequestParam List<Long> ids) {
+    planService.deletePlans(ids);
+    return ResponseEntity.noContent().build();
   }
 
 }

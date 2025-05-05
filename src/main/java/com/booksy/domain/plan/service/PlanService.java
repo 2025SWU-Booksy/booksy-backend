@@ -313,4 +313,34 @@ public class PlanService {
     plan.setEndDate(newEndDate);
   }
 
+  /**
+   * 플랜 단일 삭제
+   *
+   * @param planId 삭제할 플랜 ID
+   * @exception ApiException PLAN_NOT_FOUND (존재하지 않거나 다른 사용자의 플랜일 경우)
+   */
+  @Transactional
+  public void deletePlan(Long planId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    Plan plan = planRepository.findByIdAndUser(planId, user)
+        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+
+    planRepository.delete(plan);
+  }
+
+  /**
+   * 플랜 다중 삭제
+   *
+   * @param planIds 삭제할 플랜 ID 리스트
+   */
+  @Transactional
+  public void deletePlans(List<Long> planIds) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    planRepository.deleteByIdsAndUser(planIds, user);
+  }
+
 }
