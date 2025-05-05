@@ -37,4 +37,11 @@ public class Book extends BaseTimeEntity {
 
   @Column(name = "image_url")
   private String imageUrl;
+
+  @Column(columnDefinition = "TEXT")
+  private String fullDescription;
+
+  @Column(name = "difficulty_level")
+  private String difficultyLevel;
+
 }

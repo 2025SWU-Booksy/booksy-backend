@@ -13,9 +13,11 @@ import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.service.UserService;
+import com.booksy.global.ai.OpenAiClient;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -40,6 +42,8 @@ public class PlanService {
   private final PlanMapper planMapper;
   private final ObjectMapper objectMapper;
 
+  private final OpenAiClient openAiClient;
+
   /**
    * 플랜 미리보기를 위한 계산 (DB 저장 없이 결과만 반환)
    *
@@ -50,6 +54,7 @@ public class PlanService {
   public PlanPreviewResponseDto previewPlan(PlanCreateRequestDto requestDto) {
     Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
 
+    // 읽을 날짜 계산
     List<LocalDate> readingDates = calculateReadingDates(
         requestDto.getStartDate(),
         requestDto.getPeriodDays(),
@@ -57,11 +62,64 @@ public class PlanService {
         requestDto.getExcludeWeekdays()
     );
 
+    // 난이도 기본값은 초급
+    String level = "초급";
+
+    // GPT 호출 조건: fullDescription 존재 & 저장된 난이도 없음
+    if (book.getFullDescription() != null && !book.getFullDescription().isBlank()) {
+      if (book.getDifficultyLevel() != null && !book.getDifficultyLevel().isBlank()) {
+        level = book.getDifficultyLevel(); // 캐시된 값 사용
+      } else {
+        // GPT 호출
+        String gptResultJson = openAiClient.askDifficulty(book.getTitle(),
+            book.getFullDescription());
+        level = parseLevelFromJson(gptResultJson);
+
+        // 결과 캐싱 (주의: 트랜잭션 내에서만 가능)
+        book.setDifficultyLevel(level);
+        bookService.findOrCreateBookByIsbn(book.getIsbn());
+      }
+    }
+
+    // 난이도에 따른 읽기 속도 설정
+    int speed = switch (level) {
+      case "초급" -> 2; // 1p = 2분
+      case "중급" -> 3;
+      case "고급" -> 5;
+      default -> 2;
+    };
+
     int dailyPages = book.getTotalPage() / readingDates.size();
-    int dailyMinutes = dailyPages; // 1p = 1분 기준
+    int dailyMinutes = dailyPages * speed;
     int totalDays = readingDates.size();
 
     return planMapper.toPreviewDto(book, dailyPages, dailyMinutes, totalDays, readingDates);
+  }
+
+  /**
+   * GPT 응답 문자열에서 난이도(level) 값을 파싱하여 반환
+   *
+   * GPT가 반환한 JSON 예시:
+   * {
+   * "level": "중급",
+   * "reason": "의학적 내용과 철학적 고찰이 포함되어 있음"
+   * }
+   *
+   * 해당 JSON에서 "level" 값을 추출하여 반환한다.
+   * 파싱 실패 시 기본값인 "초급"을 반환한다.
+   *
+   * @param json GPT 응답 문자열 (JSON 형식)
+   * @return 난이도 문자열 ("초급", "중급", "고급" 중 하나, 또는 fallback 값)
+   */
+  private String parseLevelFromJson(String json) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode root = mapper.readTree(json);
+      return root.get("level").asText(); // "초급", "중급", "고급" 중 하나 기대
+    } catch (Exception e) {
+      // 파싱 실패시 기본값
+      return "초급";
+    }
   }
 
   /**

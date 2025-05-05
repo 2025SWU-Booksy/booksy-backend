@@ -36,6 +36,7 @@ public class BookMapper {
         .publishedDate(book.getPublishedDate())
         .totalPage(book.getTotalPage())
         .imageUrl(book.getImageUrl())
+        .description(book.getFullDescription())
         .build();
   }
 
@@ -67,6 +68,7 @@ public class BookMapper {
         .publishedDate(dto.getPublishedDate())
         .totalPage(dto.getTotalPage())
         .imageUrl(dto.getImageUrl())
+        .fullDescription(dto.getDescription())
         .build();
   }
 
