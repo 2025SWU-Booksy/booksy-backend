@@ -39,7 +39,8 @@ public enum ErrorCode {
 
   // PLAN
   PLAN_NOT_FOUND(404, "P001", "Plan not found", LogLevel.WARN),
-
+  INVALID_PLAN_STATUS(400, "P002", "Invalid plan status", LogLevel.WARN),
+  INVALID_PLAN_EXTENSION(400, "P003", "Cannot extend free plan", LogLevel.WARN),
 
   // SECURE
   UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN);

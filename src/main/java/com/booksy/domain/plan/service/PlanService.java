@@ -271,4 +271,47 @@ public class PlanService {
         .collect(Collectors.toList());
   }
 
+  /**
+   * 플랜 상태를 중도 포기로 변경
+   *
+   * @param planId 플랜 ID
+   */
+  @Transactional
+  public void abandonPlan(Long planId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    Plan plan = planRepository.findByIdAndUser(planId, user)
+        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+
+    if (!plan.getStatus().equals(PlanStatus.READING)) {
+      throw new ApiException(ErrorCode.INVALID_PLAN_STATUS);
+    }
+
+    plan.setStatus(PlanStatus.ABANDONED);
+  }
+
+  /**
+   * 플랜 종료일 연장
+   *
+   * @param planId     연장할 플랜의 ID
+   * @param newEndDate 새로 설정할 종료일
+   * @exception ApiException PLAN_NOT_FOUND: 플랜이 존재하지 않을 경우
+   * @exception ApiException INVALID_PLAN_EXTENSION: 자유 플랜은 연장 불가
+   */
+  @Transactional
+  public void extendPlan(Long planId, LocalDate newEndDate) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    Plan plan = planRepository.findByIdAndUser(planId, user)
+        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+
+    if (plan.getIsFreePlan() != null && plan.getIsFreePlan()) {
+      throw new ApiException(ErrorCode.INVALID_PLAN_EXTENSION);
+    }
+
+    plan.setEndDate(newEndDate);
+  }
+
 }

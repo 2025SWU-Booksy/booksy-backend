@@ -2,17 +2,20 @@ package com.booksy.domain.plan.controller;
 
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanDetailResponseDto;
+import com.booksy.domain.plan.dto.PlanExtendRequestDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.service.PlanService;
 import com.booksy.domain.plan.type.PlanStatus;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -122,6 +125,33 @@ public class PlanController {
   public ResponseEntity<List<PlanSummaryResponseDto>> getPlansByDate(
       @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
     return ResponseEntity.ok(planService.getPlansByDate(date));
+  }
+
+  /**
+   * 플랜 상태를 중도 포기로 변경
+   *
+   * @param planId 플랜 ID
+   * @return 204 No Content
+   */
+  @PatchMapping("/{planId}/withdraw")
+  public ResponseEntity<Void> abandonPlan(@PathVariable Long planId) {
+    planService.abandonPlan(planId);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * 플랜 종료일 연장 API
+   *
+   * @param planId     연장할 플랜 ID (PathVariable)
+   * @param requestDto 새 종료일 정보가 담긴 요청 바디
+   * @return 200 OK (성공 시 응답 본문 없음)
+   */
+  @PatchMapping("/{planId}/extend")
+  public ResponseEntity<Void> extendPlan(
+      @PathVariable Long planId,
+      @RequestBody @Valid PlanExtendRequestDto requestDto) {
+    planService.extendPlan(planId, requestDto.getNewEndDate());
+    return ResponseEntity.ok().build();
   }
 
 }
