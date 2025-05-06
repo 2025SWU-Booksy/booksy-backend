@@ -59,4 +59,22 @@ public class BookController {
     BookResponseDto result = bookService.getBookDetailFromAladin(isbn);
     return ResponseEntity.ok(result);
   }
+
+  /**
+   * 카테고리 기반 도서 목록 조회 API
+   *
+   * @param categoryId 알라딘 카테고리 ID
+   * @param limit      결과 수 (기본값 10)
+   * @param sort       정렬 기준 (기본값 "SalesPoint")
+   * @return BookResponseDto 리스트
+   */
+  @GetMapping("/category")
+  public List<BookResponseDto> getBooksByCategory(
+      @RequestParam String categoryId,
+      @RequestParam(defaultValue = "10") int limit,
+      @RequestParam(defaultValue = "SalesPoint") String sort
+  ) {
+    return bookService.getBooksByCategory(categoryId, limit, sort);
+  }
+  
 }

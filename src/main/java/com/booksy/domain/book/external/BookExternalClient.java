@@ -2,6 +2,7 @@ package com.booksy.domain.book.external;
 
 import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.external.dto.AladinItemResultDto;
+import com.booksy.domain.book.external.type.AladinListType;
 import com.booksy.domain.book.external.type.AladinSortType;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.global.error.ErrorCode;
@@ -34,8 +35,9 @@ public class BookExternalClient {
    * @param maxResults 최대 검색 결과 수
    * @return BookResponseDto 리스트 (정제된 형태)
    */
-  public List<BookResponseDto> searchBooksByKeyword(String keyword, int maxResults, String sort) {
-    String sortOption = AladinSortType.fromInput(sort);  // ← 변환
+  public List<BookResponseDto> searchBooksByKeyword(String keyword, int maxResults, String sort)
+      throws ApiException {
+    String sortOption = AladinSortType.fromInput(sort);
 
     String url = UriComponentsBuilder.fromHttpUrl(
             "https://www.aladin.co.kr/ttb/api/ItemSearch.aspx")
@@ -85,4 +87,27 @@ public class BookExternalClient {
 
     return bookMapper.toDto(response.getItem().get(0));
   }
+
+  public List<BookResponseDto> searchBooksByCategory(String categoryId, int maxResults,
+      String sort) throws ApiException {
+    String queryType = AladinListType.fromSortInput(sort);
+
+    String url = UriComponentsBuilder.fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemList.aspx")
+        .queryParam("ttbkey", apiKey)
+        .queryParam("QueryType", queryType)
+        .queryParam("CategoryId", categoryId)
+        .queryParam("MaxResults", maxResults)
+        .queryParam("output", "js")
+        .queryParam("Version", "20131101")
+        .toUriString();
+
+    AladinItemResultDto response = restTemplate.getForObject(url, AladinItemResultDto.class);
+
+    if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    return bookMapper.toDtoListFromAladin(response.getItem());
+  }
+
 }

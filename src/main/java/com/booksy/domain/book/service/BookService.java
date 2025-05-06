@@ -88,5 +88,18 @@ public class BookService {
         });
   }
 
+  /**
+   * 알라딘 API를 통해 카테고리 ID 기반 도서 목록을 조회
+   *
+   * @param categoryId 알라딘 카테고리 ID
+   * @param limit      최대 검색 결과 수
+   * @param sort       정렬 기준 (e.g., SalesPoint, PublishTime 등)
+   * @return BookResponseDto 리스트
+   */
+  @Transactional(readOnly = true)
+  public List<BookResponseDto> getBooksByCategory(String categoryId, int limit, String sort) {
+    return bookExternalClient.searchBooksByCategory(categoryId, limit, sort);
+  }
+
 }
 

@@ -1,5 +1,8 @@
 package com.booksy.domain.book.external.type;
 
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
+
 public enum AladinSortType {
 
   ACCURACY("accuracy", "Accuracy"),
@@ -23,6 +26,6 @@ public enum AladinSortType {
         return type.getAladinValue();
       }
     }
-    return ACCURACY.getAladinValue(); // 기본값
+    throw new ApiException(ErrorCode.INVALID_SORT_TYPE);
   }
 }
