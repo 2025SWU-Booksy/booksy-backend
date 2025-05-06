@@ -88,6 +88,20 @@ public class BookExternalClient {
     return bookMapper.toDto(response.getItem().get(0));
   }
 
+  /**
+   * 알라딘 API를 호출하여 카테고리 ID 및 정렬 기준에 따라 도서 목록을 조회한다.
+   * 정렬 기준에 따라 내부적으로 적절한 QueryType을 자동 지정한다.
+   *
+   * 예:
+   * - sort=popular → QueryType=Bestseller
+   * - sort=recent → QueryType=ItemNewAll
+   *
+   * @param categoryId 알라딘 카테고리 ID (예: "336"은 자기계발)
+   * @param maxResults 최대 결과 개수 (예: 10, 20)
+   * @param sort       정렬 기준 (popular, recent, editor, blog 중 하나)
+   * @return BookResponseDto 리스트 (조회된 도서 목록)
+   * @exception ApiException 정렬 값이 잘못된 경우 또는 내부 처리 중 예외 발생 시
+   */
   public List<BookResponseDto> searchBooksByCategory(String categoryId, int maxResults,
       String sort) throws ApiException {
     String queryType = AladinListType.fromSortInput(sort);
