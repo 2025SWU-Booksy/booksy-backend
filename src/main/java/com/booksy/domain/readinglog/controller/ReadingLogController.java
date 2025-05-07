@@ -1,9 +1,6 @@
 package com.booksy.domain.readinglog.controller;
 
-import com.booksy.domain.readinglog.dto.ReadingLogResponseDto;
-import com.booksy.domain.readinglog.dto.ScrapBookResponseDto;
-import com.booksy.domain.readinglog.dto.ScrapResponseDto;
-import com.booksy.domain.readinglog.dto.UpdateLogResponseDto;
+import com.booksy.domain.readinglog.dto.*;
 import com.booksy.domain.readinglog.service.ReadingLogService;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.service.UserService;
@@ -99,4 +96,21 @@ public class ReadingLogController {
 
     return ResponseEntity.ok(result);
   }
+
+  /**
+   * 독서로그 선택 삭제 API
+   *
+   * @param request        삭제할 로그 id 리스트
+   * @param authentication JWT 인증 정보 (userId 추출용)
+   * @return
+   */
+  @DeleteMapping
+  public ResponseEntity<String> deleteMultipleLogs(
+      @RequestBody LogDeleteRequestDto request,
+      Authentication authentication
+  ) {
+    readingLogService.deleteMultipleLogs(request.getLogIds(), authentication);
+    return ResponseEntity.ok("삭제되었습니다");
+  }
 }
+

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -102,6 +103,7 @@ public class BookExternalClient {
    * @return BookResponseDto 리스트 (조회된 도서 목록)
    * @exception ApiException 정렬 값이 잘못된 경우 또는 내부 처리 중 예외 발생 시
    */
+  @Cacheable(value = "bookList", key = "#categoryId + '_' + #sort")
   public List<BookResponseDto> searchBooksByCategory(String categoryId, int maxResults,
       String sort) throws ApiException {
     String queryType = AladinListType.fromSortInput(sort);

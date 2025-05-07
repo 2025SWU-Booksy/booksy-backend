@@ -25,7 +25,7 @@ public class User {
   @Column(nullable = false, unique = true)
   private String email;
 
-  @Column(name = "password_hash", nullable = false)
+  @Column(name = "password_hash") // 소셜 로그인 회원은 null
   private String password;
 
   @Enumerated(EnumType.STRING)
