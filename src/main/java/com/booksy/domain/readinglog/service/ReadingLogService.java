@@ -196,7 +196,24 @@ public class ReadingLogService {
     return list;
   }
 
+  /**
+   * @param logIds 로그ID
+   * @param auth   로그인 사용자 인증 정보
+   */
+  public void deleteMultipleLogs(List<Long> logIds, Authentication auth) {
+    User user = userService.getCurrentUser(auth);
 
+    for (Long logId : logIds) {
+      ReadingLog log = readingLogRepository.findById(logId)
+          .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+
+      if (!log.getPlan().getUser().getId().equals(user.getId())) {
+        throw new ApiException(ErrorCode.UNAUTHORIZED_ACCESS);
+      }
+
+      readingLogRepository.delete(log);
+    }
+  }
 }
 
 
