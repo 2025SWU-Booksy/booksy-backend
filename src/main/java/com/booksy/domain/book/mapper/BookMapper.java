@@ -83,11 +83,25 @@ public class BookMapper {
     SubInfoDto sub = item.getSubInfo();
     String description = null;
 
+    // ❗ 임시값 - 수정예정
     if (sub != null) {
       if (sub.getFulldescription() != null && !sub.getFulldescription().isBlank()) {
         description = sub.getFulldescription();
       } else if (sub.getFulldescription2() != null && !sub.getFulldescription2().isBlank()) {
-        description = sub.getFulldescription2();
+        description = sub.getFulldescription2(); // fallback
+      } else {
+        description =
+            "과도한 이자를 물며 돈을 빌리거나, 반복적으로 약속에 늦고, 다이어트를 결심해도 며칠을 못 버티는 사람들. 이처럼 경솔한 행동을 하는 사람들의 공통점은"
+                + " 무엇일까? 하버드대 경제학과 교수 센딜 멀레이너선과 프린스턴대 교수 엘다 샤퍼는 『결핍은 우리를 어떻게 변화시키는가』에서 흥미로운 답을 "
+                + "제시한다. 이들의 비합리적인 행동은 개인의 지능이나 자제력 부족이 아닌, ‘결핍’에서 비롯된다는 것이다.\n"
+                + "\n"
+                + "물론 결핍이 반드시 부정적인 것만은 아니다. 오히려 결핍은 우리의 잠재력을 끌어내는 원동력이 되기도 한다. 시간이 부족할 때 집중력이 "
+                + "높아지거나, 쓸 수 있는 자원이 한정되어 있을 때 더 창의적인 해결책을 찾아낼 수 있는 이유도 바로 이 때문이다. 하지만 이 집중이 지나치면"
+                + " 다른 중요한 것을 놓칠 수도 있다.\n"
+                + "\n"
+                + "가난한 사람이 지출을 줄이기 위해 꼭 필요한 보험을 해지하고, 바쁜 사람이 약속 시간에 맞추려고 무단횡단을 하는 것처럼 말이다.『결핍은 "
+                + "우리를 어떻게 변화시키는가』는 이와 같이 결핍이 우리의 인지 능력에 영향을 미치는 여러 사례와 방대한 연구 결과를 살펴보며 결핍이 우리의 "
+                + "행동과 의사 결정에 미치는 영향을 상세히 분석한다.";
       }
     }
 

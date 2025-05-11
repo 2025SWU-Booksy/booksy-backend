@@ -73,6 +73,9 @@ public class PlanService {
         // GPT 호출
         String gptResultJson = openAiClient.askDifficulty(book.getTitle(),
             book.getFullDescription());
+
+        System.out.println("🎯 GPT 응답: " + gptResultJson);
+
         level = parseLevelFromJson(gptResultJson);
 
         // 결과 캐싱 (주의: 트랜잭션 내에서만 가능)
@@ -86,7 +89,7 @@ public class PlanService {
       case "초급" -> 2; // 1p = 2분
       case "중급" -> 3;
       case "고급" -> 5;
-      default -> 2;
+      default -> 3;
     };
 
     int dailyPages = book.getTotalPage() / readingDates.size();

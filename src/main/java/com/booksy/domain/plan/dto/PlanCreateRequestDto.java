@@ -18,6 +18,7 @@ public class PlanCreateRequestDto {
   private Boolean isFreePlan = false;
   private List<LocalDate> excludeDates;
   private List<Integer> excludeWeekdays; // 0:일요일 ~ 6:토요일
+  private String description;
 
   // preview 결과 복사용 필드
   private List<LocalDate> readingDates;

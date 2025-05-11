@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class OpenAiClient {
 
-  @Value("${openai.api-key}")
+  @Value("${external.openai.api-key}")
   private String apiKey;
 
   private final ObjectMapper objectMapper;
