@@ -18,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * 알라딘 외부 API와 통신하여 도서 정보를 가져오는 클라이언트
+ * 도서 DB 제공 : 알라딘 인터넷서점( www.aladin.co.kr)
  */
 @Component
 @RequiredArgsConstructor
@@ -77,6 +78,7 @@ public class BookExternalClient {
         .queryParam("ItemId", isbn)
         .queryParam("output", "js")
         .queryParam("Version", "20131101")
+        .queryParam("OptResult", "fulldescription,fulldescription2")
         .toUriString();
 
     AladinItemResultDto response = restTemplate.getForObject(url,
