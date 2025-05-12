@@ -39,7 +39,7 @@ public class SecurityConfig {
         .sessionManagement(session ->
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/login", "/api/signup", "/api/oauth-login", "/api/auth-test")
+            .requestMatchers("/api/login", "/api/signup", "/api/oauth/**", "/oauth/callback/naver")
             .permitAll()
             .anyRequest().authenticated()
         )

@@ -21,8 +21,7 @@ public class User {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
-
-  @Column(nullable = false, unique = true)
+  
   private String email;
 
   @Column(name = "password_hash") // 소셜 로그인 회원은 null

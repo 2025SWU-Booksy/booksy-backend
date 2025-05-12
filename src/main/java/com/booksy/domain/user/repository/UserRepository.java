@@ -1,5 +1,6 @@
 package com.booksy.domain.user.repository;
 
+import com.booksy.domain.user.entity.Provider;
 import com.booksy.domain.user.entity.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +13,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
   Optional<User> findByEmail(String email);
 
   /**
-   * 소셜 로그인 시 provider + providerUserId로 유저 찾기 (선택사항)
+   * 소셜 로그인 시 provider + providerUserId로 유저 찾기
    */
-  Optional<User> findByProviderAndProviderUserId(String provider, String providerUserId);
+  Optional<User> findByProviderAndProviderUserId(Provider provider, String providerUserId);
 }
