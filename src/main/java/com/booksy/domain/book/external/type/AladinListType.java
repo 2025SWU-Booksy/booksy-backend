@@ -2,7 +2,8 @@ package com.booksy.domain.book.external.type;
 
 public enum AladinListType {
   POPULAR("popular", "Bestseller"),
-  RECENT("recent", "ItemNewAll");
+  RECENT("recent", "ItemNewAll"),
+  RECENTSPECIAL("recentspecial", "ItemNewSpecial");
 
   private final String input;
   private final String queryType;

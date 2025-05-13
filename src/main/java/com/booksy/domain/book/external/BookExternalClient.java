@@ -117,6 +117,7 @@ public class BookExternalClient {
         .queryParam("MaxResults", maxResults)
         .queryParam("output", "js")
         .queryParam("Version", "20131101")
+        .queryParam("SearchTarget", "Book")
         .toUriString();
 
     AladinItemResultDto response = restTemplate.getForObject(url, AladinItemResultDto.class);
@@ -127,5 +128,4 @@ public class BookExternalClient {
 
     return bookMapper.toDtoListFromAladin(response.getItem());
   }
-
 }

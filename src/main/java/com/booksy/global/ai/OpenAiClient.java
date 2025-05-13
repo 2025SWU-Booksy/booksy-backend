@@ -25,9 +25,9 @@ public class OpenAiClient {
 
   private static final String API_URL = "https://api.openai.com/v1/chat/completions";
 
-  public String askDifficulty(String title, String summary) {
-    RestTemplate restTemplate = new RestTemplate();
+  RestTemplate restTemplate = new RestTemplate();
 
+  public String askDifficulty(String title, String summary) {
     String prompt = String.format(
         """
             당신은 문학 작품의 난이도를 평가하는 독서 큐레이터 AI입니다.
@@ -64,6 +64,46 @@ public class OpenAiClient {
       return chatResponse.getChoices().get(0).getMessage().getContent();
     } catch (Exception e) {
       throw new RuntimeException("GPT 응답 파싱 실패", e);
+    }
+  }
+
+  public String askRecommendation(int age, String gender) {
+    String prompt = String.format(
+        """
+            %d세 %s에게 인기 있는 실제 도서 5권을 추천해줘.
+                    
+            조건:
+            - 반드시 존재하는 책만 추천해줘
+            - 각 책은 제목(title), 저자(author), ISBN-13(isbn)을 포함해줘
+            - 응답은 다음 형식의 JSON 배열로 해줘:
+              [{"title": "...", "author": "...", "isbn": "..."}, ...]
+            """,
+        age,
+        gender.equalsIgnoreCase("F") ? "여성" : "남성"
+    );
+
+    ChatRequest request = new ChatRequest("gpt-3.5-turbo", List.of(
+        new Message("system", "당신은 독서 큐레이터 AI입니다."),
+        new Message("user", prompt)
+    ));
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setBearerAuth(apiKey);
+
+    HttpEntity<ChatRequest> entity = new HttpEntity<>(request, headers);
+
+    ResponseEntity<String> response = restTemplate.postForEntity(API_URL, entity, String.class);
+
+    try {
+      return objectMapper.readTree(response.getBody())
+          .get("choices")
+          .get(0)
+          .get("message")
+          .get("content")
+          .asText();
+    } catch (Exception e) {
+      throw new RuntimeException("GPT 도서 추천 응답 파싱 실패", e);
     }
   }
 
