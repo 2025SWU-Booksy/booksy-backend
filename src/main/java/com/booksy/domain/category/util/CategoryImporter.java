@@ -3,14 +3,14 @@ package com.booksy.domain.category.util;
 import com.booksy.domain.category.dto.CategoryCsvRow;
 import com.booksy.domain.category.entity.Category;
 import com.booksy.domain.category.repository.CategoryRepository;
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
 import jakarta.annotation.PostConstruct;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,105 +31,60 @@ public class CategoryImporter {
    */
   @PostConstruct
   public void importCsvToDatabase() {
-    System.out.println("🚀 CategoryImporter 실행 시작");
-
     List<CategoryCsvRow> rows = CsvReader.readCategoryCsv();
 
-    Set<Long> existingIds = categoryRepository.findAll().stream()
-        .map(Category::getId)
-        .collect(Collectors.toSet());
-
     Map<Long, Category> categoryMap = new HashMap<>();
-    int skippedNullCid = 0;
-    int skippedParseError = 0;
-    int skippedNoDepthOrName = 0;
-    int skippedNoParent = 0;
 
-    // 최대 3회 반복 (parent → child 순서 보장)
-    for (int round = 0; round < 3; round++) {
-      int addedThisRound = 0;
-
-      for (CategoryCsvRow row : rows) {
-        String cidStr = row.getCid();
-        if (cidStr == null || cidStr.isBlank()) {
-          skippedNullCid++;
-          continue;
-        }
-
-        Long cid;
-        try {
-          cid = Long.parseLong(cidStr);
-        } catch (NumberFormatException e) {
-          skippedParseError++;
-          continue;
-        }
-
-        // 이미 DB에 존재하거나 이번에 추가된 경우 스킵
-        if (existingIds.contains(cid) || categoryMap.containsKey(cid)) {
-          continue;
-        }
-
-        // 가장 하위 depth에 있는 name, depth 계산
-        String[] names = {row.getDepth1(), row.getDepth2(), row.getDepth3(), row.getDepth4(),
-            row.getDepth5()};
-        String name = null;
-        int depth = 0;
-        for (int i = names.length - 1; i >= 0; i--) {
-          if (names[i] != null && !names[i].isBlank()) {
-            name = names[i];
-            depth = i + 1;
-            break;
-          }
-        }
-
-        if (name == null || depth == 0) {
-          skippedNoDepthOrName++;
-          continue;
-        }
-
-        // 상위 카테고리 CID 탐색
-        Long parentCid = findParentCidFromRow(row, depth, rows);
-        if (parentCid != null && !categoryMap.containsKey(parentCid)) {
-          skippedNoParent++;
-          continue;
-        }
-
-        Category parent = parentCid != null ? categoryMap.get(parentCid) : null;
-
-        Category category = Category.builder()
-            .id(cid)
-            .name(name)
-            .depth(depth)
-            .mall(row.getMall())
-            .parent(parent)
-            .build();
-
-        categoryMap.put(cid, category);
-        addedThisRound++;
+    for (CategoryCsvRow row : rows) {
+      String cidStr = row.getCid();
+      if (cidStr == null || cidStr.isBlank()) {
+        continue;
       }
 
-      System.out.println("🔁 패스 " + (round + 1) + "회차 - 새로 추가된 category 수: " + addedThisRound);
-      if (addedThisRound == 0) {
-        break;
+      Long cid;
+      try {
+        cid = Long.parseLong(cidStr);
+      } catch (NumberFormatException e) {
+        continue;
       }
+
+      // 가장 하위 depth에 있는 name, depth 계산
+      String[] names = {row.getDepth1(), row.getDepth2(), row.getDepth3(), row.getDepth4(),
+          row.getDepth5()};
+      String name = null;
+      int depth = 0;
+      for (int i = names.length - 1; i >= 0; i--) {
+        if (names[i] != null && !names[i].isBlank()) {
+          name = names[i];
+          depth = i + 1;
+          break;
+        }
+      }
+
+      if (name == null || depth == 0) {
+        continue;
+      }
+
+      Long parentCid = findParentCidFromRow(row, depth, rows);
+      Category parent = parentCid != null ? categoryMap.get(parentCid) : null;
+
+      Category category = Category.builder()
+          .id(cid)
+          .name(name)
+          .depth(depth)
+          .mall(row.getMall())
+          .parent(parent)
+          .build();
+
+      categoryMap.put(cid, category);
     }
-
-    System.out.println("💾 저장할 category 수: " + categoryMap.size());
-    System.out.println("🚫 skipped: cid null = " + skippedNullCid);
-    System.out.println("🚫 skipped: parse error = " + skippedParseError);
-    System.out.println("🚫 skipped: no name/depth = " + skippedNoDepthOrName);
-    System.out.println("🚫 skipped: parent not found = " + skippedNoParent);
-
     try {
-      // depth 기준 정렬 후 저장
       List<Category> sortedCategories = categoryMap.values().stream()
           .sorted(Comparator.comparingInt(Category::getDepth))
           .toList();
       categoryRepository.saveAll(sortedCategories);
-      System.out.println("✅ 저장 완료");
     } catch (Exception e) {
-      System.out.println("❌ 저장 중 에러 발생: " + e.getMessage());
-      e.printStackTrace();
+      throw new ApiException(ErrorCode.CATEGORY_SAVE_FAILED);
     }
   }
 

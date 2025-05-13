@@ -43,6 +43,9 @@ public enum ErrorCode {
   INVALID_PLAN_STATUS(400, "P002", "Invalid plan status", LogLevel.WARN),
   INVALID_PLAN_EXTENSION(400, "P003", "Cannot extend free plan", LogLevel.WARN),
 
+  // CATEGORY
+  CATEGORY_SAVE_FAILED(500, "CA001", "Failed to save category", LogLevel.ERROR),
+
   // SECURE
   UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN);
 
