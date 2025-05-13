@@ -17,6 +17,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * 도서 추천 비즈니스 로직 서비스
+ * - 사용자 정보와 외부 API(GPT, 알라딘)를 기반으로 다양한 추천 리스트 구성
+ */
 @Service
 @RequiredArgsConstructor
 public class BookRecommendationService {
@@ -25,6 +29,12 @@ public class BookRecommendationService {
   private final OpenAiClient openAiClient;
   private final ObjectMapper objectMapper;
 
+  /**
+   * 사용자 기반 도서 추천 결과 생성
+   *
+   * @param user 로그인된 사용자
+   * @return 추천 도서 DTO (베스트셀러, 신간, 관심 장르, GPT 기반)
+   */
   public BookRecommendationResponseDto recommendBooks(User user) {
 
     // 1. 베스트셀러 (전체)
@@ -60,6 +70,13 @@ public class BookRecommendationService {
         .build();
   }
 
+  /**
+   * GPT를 활용한 개인화 도서 추천
+   * - 사용자 나이와 성별을 기반으로 추천된 도서 제목/ISBN을 받아 알라딘 API로 상세 조회
+   *
+   * @param user 로그인 사용자
+   * @return 추천 도서 리스트 (GPT 응답 → 알라딘 ISBN 기반 조회)
+   */
   private List<BookResponseDto> recommendByGpt(User user) {
     try {
       String gptResponse = openAiClient.askRecommendation(user.getAge(), user.getGender().name());
