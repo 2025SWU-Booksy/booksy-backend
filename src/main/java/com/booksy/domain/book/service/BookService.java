@@ -1,8 +1,11 @@
 package com.booksy.domain.book.service;
 
 import com.booksy.domain.book.dto.BookResponseDto;
+import com.booksy.domain.book.dto.LibraryLocationResponseDto;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.external.BookExternalClient;
+import com.booksy.domain.book.external.LibraryExternalClient;
+import com.booksy.domain.book.external.dto.LibraryInfo;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.domain.book.repository.BookRepository;
 import com.booksy.global.error.ErrorCode;
@@ -22,6 +25,7 @@ public class BookService {
   private final BookRepository bookRepository;
   private final BookMapper bookMapper;
   private final BookExternalClient bookExternalClient;
+  private final LibraryExternalClient libraryExternalClient;
 
   /**
    * ISBN을 기반으로 내부 DB에 저장된 도서 정보를 조회
@@ -62,14 +66,13 @@ public class BookService {
 
   /**
    * ISBN으로 책 정보를 조회하고, 없으면 알라딘 API에서 가져와 저장
-   *
-   * 1. 내부 DB(Book 테이블)에서 ISBN으로 조회
-   * 2. 존재하지 않으면 → 알라딘 API 호출하여 책 정보를 가져옴
-   * 3. 가져온 정보를 Book 엔티티로 변환하여 DB에 저장
+   * <p>
+   * 1. 내부 DB(Book 테이블)에서 ISBN으로 조회 2. 존재하지 않으면 → 알라딘 API 호출하여 책 정보를 가져옴 3. 가져온 정보를 Book 엔티티로 변환하여
+   * DB에 저장
    *
    * @param isbn 조회할 도서의 ISBN
    * @return Book 엔티티 (기존 또는 새로 저장된 값)
-   * @exception ApiException BOOK_NOT_FOUND_EXTERNAL (알라딘 API에 결과 없을 때)
+   * @throws ApiException BOOK_NOT_FOUND_EXTERNAL (알라딘 API에 결과 없을 때)
    */
   @Transactional
   public Book findOrCreateBookByIsbn(String isbn) {
@@ -99,6 +102,36 @@ public class BookService {
   @Transactional(readOnly = true)
   public List<BookResponseDto> getBooksByCategory(String categoryId, int limit, String sort) {
     return bookExternalClient.searchBooksByCategory(categoryId, limit, sort);
+  }
+
+  /**
+   * ISBN과 현재 위치를 기반으로 인근 도서관 정보를 조회하는 서비스 메서드
+   *
+   * @param isbn   ISBN-13
+   * @param lat    사용자 위도
+   * @param lng    사용자 경도
+   * @param radius 검색 반경 (단위: km)
+   * @return 도서관 위치 정보 목록
+   */
+  @Transactional(readOnly = true)
+  public List<LibraryLocationResponseDto> getNearbyLibrariesWithBook(
+      String isbn, double lat, double lng, double radius
+  ) {
+    // 책이 존재하는지 검증 (내부 또는 외부로 확인)
+    findOrCreateBookByIsbn(isbn);
+
+    // 도서관 위치 목록 조회
+    List<LibraryInfo> libraries = libraryExternalClient.getNearbyLibraries(lat, lng, radius);
+
+    // 응답 DTO로 변환
+    return libraries.stream()
+        .map(lib -> LibraryLocationResponseDto.builder()
+            .libCode(lib.getLibCode())
+            .libraryName(lib.getLibraryName())
+            .latitude(lib.getLatitude())
+            .longitude(lib.getLongitude())
+            .build())
+        .toList();
   }
 
 }

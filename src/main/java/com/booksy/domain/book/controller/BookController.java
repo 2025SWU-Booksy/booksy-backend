@@ -1,15 +1,12 @@
 package com.booksy.domain.book.controller;
 
 import com.booksy.domain.book.dto.BookResponseDto;
+import com.booksy.domain.book.dto.LibraryLocationResponseDto;
 import com.booksy.domain.book.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -76,5 +73,25 @@ public class BookController {
   ) {
     return bookService.getBooksByCategory(categoryId, limit, sort);
   }
-  
+
+  /**
+   * ISBN + 사용자 위치(lat/lng)로 근처 도서관 위치 정보 조회
+   *
+   * @param isbn   도서 ISBN
+   * @param lat    사용자 위도
+   * @param lng    사용자 경도
+   * @param radius 반경 (단위: km), 기본 2km
+   * @return 도서관 마커 정보 리스트
+   */
+  @GetMapping("/{isbn}/libraries/nearby")
+  public ResponseEntity<List<LibraryLocationResponseDto>> getNearbyLibrariesWithBook(
+      @PathVariable String isbn,
+      @RequestParam double lat,
+      @RequestParam double lng,
+      @RequestParam(defaultValue = "2.0") double radius
+  ) {
+    List<LibraryLocationResponseDto> response = bookService.getNearbyLibrariesWithBook(isbn, lat,
+        lng, radius);
+    return ResponseEntity.ok(response);
+  }
 }
