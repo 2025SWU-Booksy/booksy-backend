@@ -2,6 +2,7 @@ package com.booksy.domain.book.controller;
 
 import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.dto.LibraryLocationResponseDto;
+import com.booksy.domain.book.external.dto.BookAvailability;
 import com.booksy.domain.book.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -93,5 +94,21 @@ public class BookController {
     List<LibraryLocationResponseDto> response = bookService.getNearbyLibrariesWithBook(isbn, lat,
         lng, radius);
     return ResponseEntity.ok(response);
+  }
+
+  /**
+   * 도서관 소장 여부 및 대출 가능 여부를 조회하는 API
+   *
+   * @param isbn    ISBN-13
+   * @param libCode 도서관 코드
+   * @return BookAvailability 응답 DTO
+   */
+  @GetMapping("/{isbn}/libraries/{libCode}/availability")
+  public ResponseEntity<BookAvailability> getBookAvailability(
+      @PathVariable String isbn,
+      @PathVariable String libCode
+  ) {
+    BookAvailability result = bookService.getBookAvailability(isbn, libCode);
+    return ResponseEntity.ok(result);
   }
 }

@@ -12,5 +12,4 @@ public class BookAvailability {
 
   private final boolean hasBook;
   private final boolean loanAvailable;
-  private final int loanCount;
 }

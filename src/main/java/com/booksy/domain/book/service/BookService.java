@@ -5,6 +5,7 @@ import com.booksy.domain.book.dto.LibraryLocationResponseDto;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.external.BookExternalClient;
 import com.booksy.domain.book.external.LibraryExternalClient;
+import com.booksy.domain.book.external.dto.BookAvailability;
 import com.booksy.domain.book.external.dto.LibraryInfo;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.domain.book.repository.BookRepository;
@@ -132,6 +133,19 @@ public class BookService {
             .longitude(lib.getLongitude())
             .build())
         .toList();
+  }
+
+  /**
+   * 특정 도서관에서 ISBN 도서의 소장 여부 및 대출 가능 여부를 반환한다.
+   *
+   * @param isbn    ISBN-13
+   * @param libCode 도서관 코드
+   * @return BookAvailability 응답
+   */
+  @Transactional(readOnly = true)
+  public BookAvailability getBookAvailability(String isbn, String libCode) {
+    findOrCreateBookByIsbn(isbn);
+    return libraryExternalClient.getBookAvailability(libCode, isbn);
   }
 
 }

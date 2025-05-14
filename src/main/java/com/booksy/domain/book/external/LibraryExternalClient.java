@@ -1,5 +1,6 @@
 package com.booksy.domain.book.external;
 
+import com.booksy.domain.book.external.dto.BookAvailability;
 import com.booksy.domain.book.external.dto.LibraryInfo;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
@@ -132,5 +133,45 @@ public class LibraryExternalClient {
       return nodeList.item(0).getTextContent().trim();
     }
     return null;
+  }
+
+  /**
+   * 특정 도서관(libCode)에 ISBN에 해당하는 도서가 소장되어 있는지, 대출 가능한지 여부를 조회한다.
+   *
+   * @param libCode 도서관 고유 코드
+   * @param isbn13  ISBN-13
+   * @return BookAvailability DTO
+   * @throws ApiException 외부 API 요청 실패 시
+   */
+  public BookAvailability getBookAvailability(String libCode, String isbn13) {
+    URI uri = UriComponentsBuilder.fromHttpUrl("https://data4library.kr/api/bookExist")
+        .queryParam("authKey", apiKey)
+        .queryParam("libCode", libCode)
+        .queryParam("isbn13", isbn13)
+        .build()
+        .toUri();
+
+    try {
+      String xmlResponse = restTemplate.getForObject(uri, String.class);
+      System.out.println("도서관 API XML 응답:\n" + xmlResponse);  // 디버깅용 로그
+
+      if (xmlResponse == null || xmlResponse.isBlank()) {
+        throw new ApiException(ErrorCode.LIBRARY_API_UNAVAILABLE);
+      }
+
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      Document document = builder.parse(new InputSource(new StringReader(xmlResponse)));
+
+      Element result = (Element) document.getElementsByTagName("result").item(0);
+
+      boolean hasBook = "Y".equalsIgnoreCase(getTextContent(result, "hasBook"));
+      boolean loanAvailable = "Y".equalsIgnoreCase(getTextContent(result, "loanAvailable"));
+
+      return new BookAvailability(hasBook, loanAvailable);
+
+    } catch (Exception e) {
+      throw new ApiException(ErrorCode.LIBRARY_API_UNAVAILABLE);
+    }
   }
 }
