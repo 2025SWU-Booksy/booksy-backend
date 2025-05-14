@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.boot.logging.LogLevel;
 
 /**
- * 에러 코드 enum
- * - 애플리케이션에서 발생할 수 있는 다양한 에러를 코드와 메시지로 정의합니다.
- * - 각 에러 코드는 상태 코드, 코드 값(도메인 별 넘버링), 메시지, 로그 레벨을 포함합니다.
+ * 에러 코드 enum - 애플리케이션에서 발생할 수 있는 다양한 에러를 코드와 메시지로 정의합니다. - 각 에러 코드는 상태 코드, 코드 값(도메인 별 넘버링), 메시지, 로그
+ * 레벨을 포함합니다.
  */
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum ErrorCode {
@@ -37,6 +36,8 @@ public enum ErrorCode {
   BOOK_NOT_FOUND_INTERNAL(404, "B001", "Book not found", LogLevel.WARN),
   BOOK_NOT_FOUND_EXTERNAL(404, "B002", "Book not found from Aladin API", LogLevel.WARN),
   INVALID_SORT_TYPE(400, "B003", "Invalid sort type", LogLevel.WARN),
+  LIBRARY_API_UNAVAILABLE(502, "L001", "Failed to fetch data from library API", LogLevel.ERROR),
+  INVALID_COORDINATES(400, "L002", "Invalid or missing coordinates", LogLevel.WARN),
 
   // PLAN
   PLAN_NOT_FOUND(404, "P001", "Plan not found", LogLevel.WARN),
@@ -48,7 +49,6 @@ public enum ErrorCode {
 
   // SECURE
   UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN);
-
 
   private final int status;
   private final String code;
