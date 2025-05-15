@@ -1,13 +1,20 @@
 package com.booksy.domain.user.service;
 
+import com.booksy.domain.category.entity.Category;
+import com.booksy.domain.category.entity.UserCategory;
+import com.booksy.domain.category.repository.CategoryRepository;
 import com.booksy.domain.user.dto.*;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
+import com.booksy.global.error.ErrorCode;
+import com.booksy.global.error.exception.ApiException;
 import com.booksy.global.util.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -26,6 +33,7 @@ public class UserService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
+  private final CategoryRepository categoryRepository;
 
   /**
    * 회원가입 처리 - 이메일 중복 확인 - 닉네임 null이면 이메일로 대체 - 비밀번호 해시 - UserStatus는 ACTIVE로 설정 - 유저 저장 - 응답 메시지
@@ -56,13 +64,38 @@ public class UserService {
         .profileImage(request.getProfileImage())
         .status(UserStatus.ACTIVE)
         .isPushEnabled(true)
+        .favoriteGenres(new ArrayList<>())
         .build();
+
+    // 선호 장르 저장
+    updatePreferredGenres(user, request.getPreferredCategoryIds());
 
     // 저장
     userRepository.save(user);
 
     // 응답 리턴
     return new SignupResponse(200, "SUCCESS", "회원가입이 성공했습니다.");
+  }
+
+  /**
+   * 선호장르 저장
+   */
+  @Transactional
+  public void updatePreferredGenres(User user, List<Long> categoryIds) {
+    user.getFavoriteGenres().clear();
+
+    List<UserCategory> newFavorites = categoryIds.stream()
+        .map(categoryId -> {
+          Category category = categoryRepository.findById(categoryId)
+              .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+          return UserCategory.builder()
+              .user(user)
+              .category(category)
+              .build();
+        })
+        .toList();
+
+    user.getFavoriteGenres().addAll(newFavorites);
   }
 
   /**
@@ -110,13 +143,18 @@ public class UserService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
+    // 유저 선호 장르 ID 리스트 추출
+    List<Long> preferredCategoryIds = user.getFavoriteGenres().stream()
+        .map(userCategory -> userCategory.getCategory().getId())
+        .toList();
+
     return InfoResponse.builder()
         .email(user.getEmail())
         .nickname(user.getNickname())
         .age(user.getAge())
         .gender(user.getGender())
         .profileImage(user.getProfileImage())
-        // 선호장르
+        .preferredCategoryIds(preferredCategoryIds)
         .build();
   }
 
@@ -163,7 +201,9 @@ public class UserService {
       }
 
       // 선호 장르
-      // if (request.getPreferredGenres() != null)
+      if (request.getPreferredCategoryIds() != null) {
+        updatePreferredGenres(user, request.getPreferredCategoryIds());
+      }
 
       userRepository.save(user);
 
@@ -205,5 +245,6 @@ public class UserService {
     return userRepository.findById(Integer.parseInt(userId))
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
   }
+
 
 }

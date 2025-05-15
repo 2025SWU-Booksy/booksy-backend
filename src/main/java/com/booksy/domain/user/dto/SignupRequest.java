@@ -21,5 +21,5 @@ public class SignupRequest {
   private String nickname;  // nullable → email로 대체
   private String profileImage;  // nullable
 
-  private List<Integer> preferredCategoryIds;  // nullable
+  private List<Long> preferredCategoryIds;
 }

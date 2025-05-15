@@ -1,6 +1,7 @@
 package com.booksy.domain.user.dto;
 
 import com.booksy.domain.user.entity.Gender;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +19,5 @@ public class InfoResponse {
   private Integer age;
   private Gender gender;
   private String profileImage;
-
-  // 선호 장르
-  // private List<String> preferredGenres;
+  private List<Long> preferredCategoryIds;
 }

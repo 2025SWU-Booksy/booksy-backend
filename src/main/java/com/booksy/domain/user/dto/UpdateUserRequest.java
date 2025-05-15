@@ -1,6 +1,7 @@
 package com.booksy.domain.user.dto;
 
 import com.booksy.domain.user.entity.Gender;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,5 +17,5 @@ public class UpdateUserRequest {
   private String newPassword;         // 새 비밀번호
   private Integer age;                // 나이
   private Gender gender;              // 성별
-  // private List<Integer> preferredGenres; // 선호 장르
+  private List<Long> preferredCategoryIds; // 선호장르
 }
