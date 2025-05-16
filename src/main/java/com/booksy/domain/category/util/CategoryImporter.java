@@ -31,6 +31,12 @@ public class CategoryImporter {
    */
   @PostConstruct
   public void importCsvToDatabase() {
+
+    if (categoryRepository.count() > 0) {
+      System.out.println("🚫 Category already initialized. Skipping import.");
+      return;
+    }
+
     List<CategoryCsvRow> rows = CsvReader.readCategoryCsv();
 
     Map<Long, Category> categoryMap = new HashMap<>();
@@ -50,7 +56,7 @@ public class CategoryImporter {
 
       // 가장 하위 depth에 있는 name, depth 계산
       String[] names = {row.getDepth1(), row.getDepth2(), row.getDepth3(), row.getDepth4(),
-          row.getDepth5()};
+        row.getDepth5()};
       String name = null;
       int depth = 0;
       for (int i = names.length - 1; i >= 0; i--) {
@@ -69,19 +75,19 @@ public class CategoryImporter {
       Category parent = parentCid != null ? categoryMap.get(parentCid) : null;
 
       Category category = Category.builder()
-          .id(cid)
-          .name(name)
-          .depth(depth)
-          .mall(row.getMall())
-          .parent(parent)
-          .build();
+        .id(cid)
+        .name(name)
+        .depth(depth)
+        .mall(row.getMall())
+        .parent(parent)
+        .build();
 
       categoryMap.put(cid, category);
     }
     try {
       List<Category> sortedCategories = categoryMap.values().stream()
-          .sorted(Comparator.comparingInt(Category::getDepth))
-          .toList();
+        .sorted(Comparator.comparingInt(Category::getDepth))
+        .toList();
       categoryRepository.saveAll(sortedCategories);
     } catch (Exception e) {
       throw new ApiException(ErrorCode.CATEGORY_SAVE_FAILED);
@@ -102,34 +108,34 @@ public class CategoryImporter {
     }
 
     return rows.stream()
-        .filter(r -> {
-          int rDepth = getActualDepth(r);
-          if (rDepth != depth - 1) {
+      .filter(r -> {
+        int rDepth = getActualDepth(r);
+        if (rDepth != depth - 1) {
+          return false;
+        }
+
+        for (int i = 0; i < depth - 1; i++) {
+          String nameA = getDepthName(r, i);
+          String nameB = getDepthName(row, i);
+          if ((nameA == null || nameA.isBlank()) && (nameB == null || nameB.isBlank())) {
+            continue;
+          }
+          if (nameA == null || nameB == null || !nameA.trim().equals(nameB.trim())) {
             return false;
           }
-
-          for (int i = 0; i < depth - 1; i++) {
-            String nameA = getDepthName(r, i);
-            String nameB = getDepthName(row, i);
-            if ((nameA == null || nameA.isBlank()) && (nameB == null || nameB.isBlank())) {
-              continue;
-            }
-            if (nameA == null || nameB == null || !nameA.trim().equals(nameB.trim())) {
-              return false;
-            }
-          }
-          return true;
-        })
-        .map(r -> {
-          try {
-            return Long.parseLong(r.getCid());
-          } catch (Exception e) {
-            return null;
-          }
-        })
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+        }
+        return true;
+      })
+      .map(r -> {
+        try {
+          return Long.parseLong(r.getCid());
+        } catch (Exception e) {
+          return null;
+        }
+      })
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
   }
 
   /**
@@ -137,7 +143,7 @@ public class CategoryImporter {
    */
   private int getActualDepth(CategoryCsvRow row) {
     String[] names = {row.getDepth1(), row.getDepth2(), row.getDepth3(), row.getDepth4(),
-        row.getDepth5()};
+      row.getDepth5()};
     for (int i = names.length - 1; i >= 0; i--) {
       if (names[i] != null && !names[i].isBlank()) {
         return i + 1;
