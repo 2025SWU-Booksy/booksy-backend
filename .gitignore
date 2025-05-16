@@ -33,3 +33,6 @@ git status
 
 ### VS Code ###
 .vscode/
+
+### Firebase ###
+src/main/resources/firebase/*.json
