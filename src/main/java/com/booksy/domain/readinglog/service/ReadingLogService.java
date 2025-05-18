@@ -1,5 +1,6 @@
 package com.booksy.domain.readinglog.service;
 
+import com.booksy.domain.badge.service.BadgeService;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.readinglog.dto.*;
@@ -27,6 +28,7 @@ public class ReadingLogService {
   private final ReadingLogRepository readingLogRepository;
   private final ReadingLogMapper readingLogMapper;
   private final UserService userService;
+  private final BadgeService badgeService;
 
   /**
    * 독서로그 생성
@@ -46,6 +48,8 @@ public class ReadingLogService {
 
     ReadingLog log = readingLogMapper.toEntity(dto, user, plan);
     ReadingLog savedLog = readingLogRepository.save(log);
+
+    badgeService.evaluateReadingLogBadges(user, dto.getContentType());
 
     return readingLogMapper.toDto(savedLog);
   }

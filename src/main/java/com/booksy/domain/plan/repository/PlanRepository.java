@@ -41,4 +41,26 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
   @Query("DELETE FROM Plan p WHERE p.id IN :ids AND p.user = :user")
   void deleteByIdsAndUser(@Param("ids") List<Long> ids, @Param("user") User user);
 
+  // 플랜 완료 시 완독 뱃지 조건 검사
+  @Query("""
+        SELECT COUNT(p)
+        FROM Plan p
+        WHERE p.user.id = :userId
+          AND p.status = :status
+      """)
+  int countByUserIdAndStatus(@Param("userId") Integer userId,
+      @Param("status") PlanStatus status);
+
+  // 플랜 완료 시 장르 뱃지 조건 검사 (문제 없음)
+  @Query("""
+        SELECT COUNT(p)
+        FROM Plan p
+        JOIN p.book b
+        JOIN b.category c
+        WHERE p.user.id = :userId
+          AND p.status = 'COMPLETED'
+          AND (c.id = :categoryId OR c.parent.id = :categoryId)
+      """)
+  int countCompletedBooksByCategory(@Param("userId") Integer userId,
+      @Param("categoryId") Long categoryId);
 }

@@ -43,4 +43,15 @@ public interface TimeRecordRepository extends JpaRepository<TimeRecord, Long> {
       @Param("planId") Long planId,
       @Param("date") LocalDate date
   );
+
+  /**
+   * 타이머 완료 시 독서 시간 뱃지 조건 검사
+   */
+  @Query("""
+        SELECT COALESCE(SUM(tr.duration), 0)
+        FROM TimeRecord tr
+        WHERE tr.user.id = :userId
+          AND tr.duration > 0
+      """)
+  int getTotalReadingTime(@Param("userId") Integer userId);
 }

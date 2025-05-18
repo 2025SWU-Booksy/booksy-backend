@@ -1,5 +1,6 @@
 package com.booksy.domain.readinglog.service;
 
+import com.booksy.domain.badge.service.BadgeService;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.readinglog.dto.*;
@@ -25,6 +26,7 @@ public class TimeRecordService {
   private final TimeRecordRepository timeRecordRepository;
   private final PlanRepository planRepository;
   private final UserService userService;
+  private final BadgeService badgeService;
 
   /**
    * 타이머 시작 처리
@@ -85,6 +87,9 @@ public class TimeRecordService {
     timeRecord.setEndTime(now);
     timeRecord.setDuration((int) minutes);
     timeRecordRepository.save(timeRecord);
+
+    // 뱃지 획득 가능 여부 검사
+    badgeService.evaluateTimeBadges(user);
 
     // 페이지 갱신
     Plan plan = timeRecord.getPlan();

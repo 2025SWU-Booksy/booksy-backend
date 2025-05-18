@@ -9,6 +9,8 @@ import com.booksy.domain.book.external.dto.BookAvailability;
 import com.booksy.domain.book.external.dto.LibraryInfo;
 import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.domain.book.repository.BookRepository;
+import com.booksy.domain.category.entity.Category;
+import com.booksy.domain.category.repository.CategoryRepository;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
 import java.util.List;
@@ -27,6 +29,7 @@ public class BookService {
   private final BookMapper bookMapper;
   private final BookExternalClient bookExternalClient;
   private final LibraryExternalClient libraryExternalClient;
+  private final CategoryRepository categoryRepository;
 
   /**
    * ISBN을 기반으로 내부 DB에 저장된 도서 정보를 조회
@@ -86,7 +89,12 @@ public class BookService {
             throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
           }
 
-          Book newBook = bookMapper.toEntity(externalBook);
+          // 카테고리 ID 가져오기
+          Long categoryId = externalBook.getCategoryId();
+          
+          Category category = categoryRepository.findById(categoryId).get();
+
+          Book newBook = bookMapper.toEntity(externalBook, category);
 
           return bookRepository.save(newBook);
         });

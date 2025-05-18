@@ -4,6 +4,7 @@ import com.booksy.domain.book.dto.BookResponseDto;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.external.dto.AladinItemDto;
 import com.booksy.domain.book.external.dto.SubInfoDto;
+import com.booksy.domain.category.entity.Category;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -55,7 +56,7 @@ public class BookMapper {
   /**
    * BookResponseDto → Book 엔티티 변환
    */
-  public Book toEntity(BookResponseDto dto) {
+  public Book toEntity(BookResponseDto dto, Category category) {
     if (dto == null) {
       return null;
     }
@@ -69,6 +70,7 @@ public class BookMapper {
         .totalPage(dto.getTotalPage())
         .imageUrl(dto.getImageUrl())
         .fullDescription(dto.getDescription())
+        .category(category)
         .build();
   }
 
@@ -114,6 +116,7 @@ public class BookMapper {
         .totalPage(item.getSubInfo() != null ? item.getSubInfo().getItemPage() : 0)
         .imageUrl(item.getCover())
         .description(description)
+        .categoryId(item.getCategoryId())
         .build();
   }
 

@@ -41,4 +41,11 @@ public interface ReadingLogRepository extends JpaRepository<ReadingLog, Long> {
         GROUP BY p.id, b.title, b.author, b.imageUrl
       """)
   List<ScrapBookResponseDto> findScrapGroupedByBook(@Param("userId") Integer userId);
+
+  /**
+   * 리딩로그 등록 완료 시 리딩 로그 뱃지 조건 검사
+   */
+  @Query("SELECT COUNT(r) FROM ReadingLog r WHERE r.user.id = :userId AND r.contentType = :type")
+  int countByUserIdAndContentType(@Param("userId") Integer userId,
+      @Param("type") ContentType type);
 }
