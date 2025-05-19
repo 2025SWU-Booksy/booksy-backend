@@ -31,9 +31,4 @@ public class SearchKeyword extends BaseTimeEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
-
-  // updatedAt 강제 갱신
-  public void touch() {
-    this.keyword = this.keyword;
-  }
 }
