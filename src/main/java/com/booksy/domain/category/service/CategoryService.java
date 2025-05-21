@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -49,4 +50,20 @@ public class CategoryService {
 
     return roots;
   }
+
+  @Transactional(readOnly = true)
+  public List<CategoryResponseDto> getCategoriesByParentId(Long parentId) {
+    List<Category> categories;
+
+    if (parentId == null) {
+      categories = categoryRepository.findByParentIsNull();
+    } else {
+      categories = categoryRepository.findByParentId(parentId);
+    }
+
+    return categories.stream()
+      .map(CategoryResponseDto::fromEntity)
+      .toList();
+  }
+
 }

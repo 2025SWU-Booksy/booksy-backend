@@ -8,6 +8,13 @@ import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.readinglog.repository.TimeRecordRepository;
 import com.booksy.domain.user.dto.*;
+import com.booksy.domain.user.dto.InfoResponse;
+import com.booksy.domain.user.dto.LoginRequest;
+import com.booksy.domain.user.dto.LoginResponse;
+import com.booksy.domain.user.dto.SignupRequest;
+import com.booksy.domain.user.dto.SignupResponse;
+import com.booksy.domain.user.dto.UpdateUserRequest;
+import com.booksy.domain.user.dto.UpdateUserResponse;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
@@ -56,27 +63,29 @@ public class UserService {
 
     // 닉네임이 null이면 → 이메일로 대체
     String nickname = request.getNickname() != null
-        ? request.getNickname()
-        : request.getEmail();
+      ? request.getNickname()
+      : request.getEmail();
 
     // 비밀번호 암호화
     String encodedPassword = passwordEncoder.encode(request.getPassword());
 
     // User 엔티티 생성
     User user = User.builder()
-        .email(request.getEmail())
-        .password(encodedPassword)
-        .age(request.getAge())
-        .gender(request.getGender())
-        .nickname(nickname)
-        .profileImage(request.getProfileImage())
-        .status(UserStatus.ACTIVE)
-        .isPushEnabled(true)
-        .favoriteGenres(new ArrayList<>())
-        .build();
+      .email(request.getEmail())
+      .password(encodedPassword)
+      .age(request.getAge())
+      .gender(request.getGender())
+      .nickname(nickname)
+      .profileImage(request.getProfileImage())
+      .status(UserStatus.ACTIVE)
+      .isPushEnabled(true)
+      .favoriteGenres(new ArrayList<>())
+      .build();
 
     // 선호 장르 저장
-    updatePreferredGenres(user, request.getPreferredCategoryIds());
+    if (request.getPreferredCategoryIds() != null) {
+      updatePreferredGenres(user, request.getPreferredCategoryIds());
+    }
 
     // 저장
     userRepository.save(user);
@@ -93,15 +102,15 @@ public class UserService {
     user.getFavoriteGenres().clear();
 
     List<UserCategory> newFavorites = categoryIds.stream()
-        .map(categoryId -> {
-          Category category = categoryRepository.findById(categoryId)
-              .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
-          return UserCategory.builder()
-              .user(user)
-              .category(category)
-              .build();
-        })
-        .toList();
+      .map(categoryId -> {
+        Category category = categoryRepository.findById(categoryId)
+          .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+        return UserCategory.builder()
+          .user(user)
+          .category(category)
+          .build();
+      })
+      .toList();
 
     user.getFavoriteGenres().addAll(newFavorites);
   }
@@ -149,21 +158,21 @@ public class UserService {
    */
   public InfoResponse getMyInfo(Integer userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+      .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
     // 유저 선호 장르 ID 리스트 추출
     List<Long> preferredCategoryIds = user.getFavoriteGenres().stream()
-        .map(userCategory -> userCategory.getCategory().getId())
-        .toList();
+      .map(userCategory -> userCategory.getCategory().getId())
+      .toList();
 
     return InfoResponse.builder()
-        .email(user.getEmail())
-        .nickname(user.getNickname())
-        .age(user.getAge())
-        .gender(user.getGender())
-        .profileImage(user.getProfileImage())
-        .preferredCategoryIds(preferredCategoryIds)
-        .build();
+      .email(user.getEmail())
+      .nickname(user.getNickname())
+      .age(user.getAge())
+      .gender(user.getGender())
+      .profileImage(user.getProfileImage())
+      .preferredCategoryIds(preferredCategoryIds)
+      .build();
   }
 
   /**
@@ -174,7 +183,7 @@ public class UserService {
     try {
       // 사용자 조회
       User user = userRepository.findById(userId)
-          .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
       // 새 비밀번호가 입력됐을 때만 처리
       if (request.getNewPassword() != null) {
@@ -227,7 +236,7 @@ public class UserService {
    */
   public void deactivateUser(Integer userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+      .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
     user.updateStatus(UserStatus.INACTIVE); // 상태를 INACTIVE로 변경
     userRepository.save(user);
@@ -238,7 +247,7 @@ public class UserService {
    */
   public void restoreUser(Integer userId) {
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+      .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
     user.updateStatus(UserStatus.ACTIVE);
     userRepository.save(user);
@@ -251,7 +260,7 @@ public class UserService {
   public User getCurrentUser(Authentication authentication) {
     String userId = authentication.getName(); // 토큰에 저장된 userId 추출
     return userRepository.findById(Integer.parseInt(userId))
-        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+      .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
   }
 
   /**
