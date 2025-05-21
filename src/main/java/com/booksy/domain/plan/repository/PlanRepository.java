@@ -63,6 +63,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
       """)
   int countCompletedBooksByCategory(@Param("userId") Integer userId,
       @Param("categoryId") Long categoryId);
+
 }
 
 

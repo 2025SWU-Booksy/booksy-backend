@@ -101,4 +101,12 @@ public class UserController {
     MyPageResponse response = userService.getMyPageInfo(userId);
     return ResponseEntity.ok(response);
   }
+
+  /**
+   * 랭킹 페이지의 타 회원 정보 조회
+   */
+  @GetMapping("/users/{userId}")
+  public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Integer userId) {
+    return ResponseEntity.ok(userService.getUserProfile(userId));
+  }
 }

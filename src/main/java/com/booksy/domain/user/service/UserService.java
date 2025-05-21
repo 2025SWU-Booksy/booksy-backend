@@ -4,6 +4,9 @@ import com.booksy.domain.badge.repository.UserBadgeRepository;
 import com.booksy.domain.category.entity.Category;
 import com.booksy.domain.category.entity.UserCategory;
 import com.booksy.domain.category.repository.CategoryRepository;
+import com.booksy.domain.plan.repository.PlanRepository;
+import com.booksy.domain.plan.type.PlanStatus;
+import com.booksy.domain.readinglog.repository.TimeRecordRepository;
 import com.booksy.domain.user.dto.*;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
@@ -12,6 +15,7 @@ import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
 import com.booksy.global.util.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -36,6 +40,8 @@ public class UserService {
   private final JwtTokenProvider jwtTokenProvider;
   private final CategoryRepository categoryRepository;
   private final UserBadgeRepository userBadgeRepository;
+  private final TimeRecordRepository timeRecordRepository;
+  private final PlanRepository planRepository;
 
   /**
    * 회원가입 처리 - 이메일 중복 확인 - 닉네임 null이면 이메일로 대체 - 비밀번호 해시 - UserStatus는 ACTIVE로 설정 - 유저 저장 - 응답 메시지
@@ -267,5 +273,38 @@ public class UserService {
         .build();
   }
 
+  /**
+   * time record 데이터의 duration을 시:분으로 변환
+   */
+  private String formatMinutesToHHMM(int minutes) {
+    int hours = minutes / 60;
+    int mins = minutes % 60;
+    return String.format("%02d:%02d", hours, mins);
+  }
 
+  /**
+   * 랭킹 페이지의 타 회원 정보 조회 메서드
+   */
+  public UserProfileResponse getUserProfile(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+
+    // 어제 날짜 기준
+    LocalDate yesterday = LocalDate.now().minusDays(1);
+
+    // 어제 독서 시간 (분 단위 합계 → hh:mm:ss 변환)
+    int minutes = timeRecordRepository.getTotalReadingMinutesByDate(userId, yesterday);
+    String formattedTime = formatMinutesToHHMM(minutes);
+
+    // COMPLETED 상태 플랜 개수 (완독 수)
+    int completedCount = planRepository.countByUserIdAndStatus(userId, PlanStatus.COMPLETED);
+
+    return UserProfileResponse.builder()
+        .nickname(user.getNickname())
+        .profileImage(user.getProfileImage())
+        .level(user.getLevel())
+        .yesterdayReadingTime(formattedTime)
+        .totalCompletedBooks(completedCount)
+        .build();
+  }
 }
