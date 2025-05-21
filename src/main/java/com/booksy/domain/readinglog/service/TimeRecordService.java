@@ -3,6 +3,7 @@ package com.booksy.domain.readinglog.service;
 import com.booksy.domain.badge.service.BadgeService;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.repository.PlanRepository;
+import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.readinglog.dto.*;
 import com.booksy.domain.readinglog.entity.TimeRecord;
 import com.booksy.domain.readinglog.repository.TimeRecordRepository;
@@ -45,6 +46,11 @@ public class TimeRecordService {
       throw new ApiException(ErrorCode.UNAUTHORIZED_ACCESS);
     }
 
+    // 이미 플랜 상태가 COMPLETED일 경우 타이머 시작 불가
+    if (plan.getStatus() == PlanStatus.COMPLETED) {
+      throw new ApiException(ErrorCode.ILLEGAL_STATE); // 또는 새로운 에러코드
+    }
+
     // 이미 시작된 타이머가 존재하는지 확인
     timeRecordRepository.findFirstByUserIdAndEndTimeIsNullOrderByStartTimeDesc(user.getId())
         .ifPresent(record -> {
@@ -80,6 +86,30 @@ public class TimeRecordService {
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime startTime = timeRecord.getStartTime();
 
+    // 플랜 로직 처리
+    Plan plan = timeRecord.getPlan();
+    int currentPage = requestDto.getCurrentPage();
+    int totalPage = plan.getBook().getTotalPage();
+
+    // 현재 페이지가 이전까지 읽은 페이지보다 감소했는지 검사
+    if (currentPage < plan.getCurrentPage()) {
+      throw new ApiException(ErrorCode.ILLEGAL_STATE);
+    }
+
+    // 현재 페이지가 책의 전체 페이지를 초과하는지 검사
+    if (currentPage > totalPage) {
+      throw new ApiException(ErrorCode.ILLEGAL_STATE);
+    }
+
+    // 완독한 경우 → 플랜 and 카테고리 뱃지 평가
+    if (currentPage == totalPage) {
+      plan.setStatus(com.booksy.domain.plan.type.PlanStatus.COMPLETED);
+      badgeService.evaluatePlanBadges(user);
+    }
+
+    // 타이머 뱃지 획득 가능 여부 검사
+    badgeService.evaluateTimeBadges(user);
+
     // duration 계산 (분 단위)
     long minutes = Duration.between(startTime, now).toMinutes();
 
@@ -87,17 +117,6 @@ public class TimeRecordService {
     timeRecord.setEndTime(now);
     timeRecord.setDuration((int) minutes);
     timeRecordRepository.save(timeRecord);
-
-    // 뱃지 획득 가능 여부 검사
-    badgeService.evaluateTimeBadges(user);
-
-    // 페이지 갱신
-    Plan plan = timeRecord.getPlan();
-
-    // 현재 페이지가 이전까지 읽은 페이지보다 줄어들 수 없음
-    if (requestDto.getCurrentPage() < plan.getCurrentPage()) {
-      throw new ApiException(ErrorCode.ILLEGAL_STATE);
-    }
 
     plan.setCurrentPage(requestDto.getCurrentPage());
     planRepository.save(plan);
