@@ -23,4 +23,9 @@ public interface UserBadgeRepository extends JpaRepository<UserBadge, Long> {
    * 뱃지 획득 여부 확인
    */
   boolean existsByUserIdAndBadgeId(Integer userId, Long badgeId);
+
+  /**
+   * 사용자가 획득한 뱃지 개수 조회
+   */
+  int countByUserId(Integer userId);
 }

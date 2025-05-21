@@ -60,6 +60,10 @@ public class User {
   @Column(nullable = false)
   private UserStatus status;  // ACTIVE, INACTIVE, DELETED
 
+  @Builder.Default // 초기값 고정
+  @Column(nullable = false)
+  private int level = 1; // 유저 레벨 기본값 1
+
   // 선호 장르
   @Builder.Default
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -82,6 +86,10 @@ public class User {
 
   public void updateNickname(String nickname) {
     this.nickname = nickname;
+  }
+
+  public void updateLevel(int level) {
+    this.level = level;
   }
 
   /**

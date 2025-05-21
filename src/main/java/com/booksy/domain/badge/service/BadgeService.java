@@ -33,6 +33,18 @@ public class BadgeService {
   private final TimeRecordRepository timeRecordRepository;
 
   /**
+   * 배지를 2개 획득할 때마다 1레벨씩 레벨업
+   */
+  private void updateUserLevel(User user) {
+    int badgeCount = userBadgeRepository.countByUserId(user.getId());
+    int newLevel = 1 + (badgeCount / 2);
+
+    if (user.getLevel() != newLevel) {
+      user.updateLevel(newLevel);
+    }
+  }
+
+  /**
    * 플랜 완료 시 호출 → CATEGORY_COUNT, PLAN_COUNT 평가
    */
   @Transactional
@@ -62,6 +74,7 @@ public class BadgeService {
             .badge(badge)
             .acquiredAt(LocalDateTime.now())
             .build());
+        updateUserLevel(user);
         result.add(badge);
       }
     }
@@ -94,6 +107,7 @@ public class BadgeService {
             .badge(badge)
             .acquiredAt(LocalDateTime.now())
             .build());
+        updateUserLevel(user);
         result.add(badge);
       }
     }
@@ -122,6 +136,7 @@ public class BadgeService {
             .badge(badge)
             .acquiredAt(LocalDateTime.now())
             .build());
+        updateUserLevel(user);
         result.add(badge);
       }
     }
