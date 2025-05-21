@@ -212,5 +212,4 @@ public class TimeRecordService {
 
     return new TimeRecordDetailResponseDto(items, totalDuration);
   }
-
 }

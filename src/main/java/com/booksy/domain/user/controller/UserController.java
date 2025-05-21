@@ -91,4 +91,14 @@ public class UserController {
     userService.restoreUser(userId);
     return ResponseEntity.ok("회원 복구 처리되었습니다.");
   }
+
+  /**
+   * 마이페이지 상단 정보 조회
+   */
+  @GetMapping("/users/mypage")
+  public ResponseEntity<MyPageResponse> getMyPageInfo(Authentication authentication) {
+    Integer userId = Integer.parseInt(authentication.getName());
+    MyPageResponse response = userService.getMyPageInfo(userId);
+    return ResponseEntity.ok(response);
+  }
 }

@@ -1,5 +1,6 @@
 package com.booksy.domain.user.service;
 
+import com.booksy.domain.badge.repository.UserBadgeRepository;
 import com.booksy.domain.category.entity.Category;
 import com.booksy.domain.category.entity.UserCategory;
 import com.booksy.domain.category.repository.CategoryRepository;
@@ -34,6 +35,7 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final JwtTokenProvider jwtTokenProvider;
   private final CategoryRepository categoryRepository;
+  private final UserBadgeRepository userBadgeRepository;
 
   /**
    * 회원가입 처리 - 이메일 중복 확인 - 닉네임 null이면 이메일로 대체 - 비밀번호 해시 - UserStatus는 ACTIVE로 설정 - 유저 저장 - 응답 메시지
@@ -244,6 +246,25 @@ public class UserService {
     String userId = authentication.getName(); // 토큰에 저장된 userId 추출
     return userRepository.findById(Integer.parseInt(userId))
         .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+  }
+
+  /**
+   * 마이페이지 상단 요약 정보 조회 메서드
+   */
+
+  public MyPageResponse getMyPageInfo(Integer userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+
+    int badgeCount = userBadgeRepository.countByUserId(userId);
+
+    return MyPageResponse.builder()
+        .nickname(user.getNickname())
+        .email(user.getEmail())
+        .profileImage(user.getProfileImage())
+        .level(user.getLevel())
+        .badgeCount(badgeCount)
+        .build();
   }
 
 
