@@ -22,4 +22,5 @@ public class BookResponseDto {
   private String imageUrl;
   private String description;
   private Long categoryId;
+  private String categoryName;
 }

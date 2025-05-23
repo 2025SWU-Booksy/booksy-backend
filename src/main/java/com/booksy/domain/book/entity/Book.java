@@ -2,9 +2,19 @@ package com.booksy.domain.book.entity;
 
 import com.booksy.domain.category.entity.Category;
 import com.booksy.global.common.BaseTimeEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import java.time.LocalDate;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Book 엔티티 클래스 DB의 'book' 테이블과 매핑되며, 도서 정보를 표현한다.
@@ -32,7 +42,7 @@ public class Book extends BaseTimeEntity {
   private String imageUrl;
 
   @Column(columnDefinition = "TEXT")
-  private String fullDescription;
+  private String description;
 
   @Column(name = "difficulty_level")
   private String difficultyLevel;

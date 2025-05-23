@@ -16,7 +16,6 @@ import com.booksy.domain.user.service.UserService;
 import com.booksy.global.ai.OpenAiClient;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
@@ -40,7 +39,6 @@ public class PlanService {
   private final UserService userService;
   private final BookService bookService;
   private final PlanMapper planMapper;
-  private final ObjectMapper objectMapper;
 
   private final OpenAiClient openAiClient;
 
@@ -52,35 +50,33 @@ public class PlanService {
    */
   @Transactional(readOnly = true)
   public PlanPreviewResponseDto previewPlan(PlanCreateRequestDto requestDto) {
+    // 1. 도서 조회 or 저장
     Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
 
-    // 읽을 날짜 계산
+    // 2. 읽을 날짜 계산
     List<LocalDate> readingDates = calculateReadingDates(
-        requestDto.getStartDate(),
-        requestDto.getPeriodDays(),
-        requestDto.getExcludeDates(),
-        requestDto.getExcludeWeekdays()
+      requestDto.getStartDate(),
+      requestDto.getPeriodDays(),
+      requestDto.getExcludeDates(),
+      requestDto.getExcludeWeekdays()
     );
 
-    // 난이도 기본값은 초급
+    // 3. 난이도 판단 (기본값: 초급)
     String level = "초급";
 
-    // GPT 호출 조건: fullDescription 존재 & 저장된 난이도 없음
-    if (book.getFullDescription() != null && !book.getFullDescription().isBlank()) {
+    if (book.getDescription() != null && !book.getDescription().isBlank()) {
       if (book.getDifficultyLevel() != null && !book.getDifficultyLevel().isBlank()) {
-        level = book.getDifficultyLevel(); // 캐시된 값 사용
+        level = book.getDifficultyLevel();
       } else {
         // GPT 호출
         String gptResultJson = openAiClient.askDifficulty(book.getTitle(),
-            book.getFullDescription());
+          book.getDescription());
 
         System.out.println("🎯 GPT 응답: " + gptResultJson);
-
         level = parseLevelFromJson(gptResultJson);
 
-        // 결과 캐싱 (주의: 트랜잭션 내에서만 가능)
+        // 결과 캐싱 (트랜잭션 안이므로 자동 감지되어 저장됨)
         book.setDifficultyLevel(level);
-        bookService.findOrCreateBookByIsbn(book.getIsbn());
       }
     }
 
@@ -88,15 +84,22 @@ public class PlanService {
     int speed = switch (level) {
       case "초급" -> 2; // 1p = 2분
       case "중급" -> 3;
-      case "고급" -> 5;
-      default -> 3;
+      case "고급" -> 4;
+      default -> 2;
     };
 
     int dailyPages = book.getTotalPage() / readingDates.size();
     int dailyMinutes = dailyPages * speed;
     int totalDays = readingDates.size();
 
-    return planMapper.toPreviewDto(book, dailyPages, dailyMinutes, totalDays, readingDates);
+    // 하루 권장 시간이 90분을 초과하는 경우 기간 재설정 유도
+    boolean tooLong = dailyMinutes > 90;
+    int recommendedDays = tooLong
+      ? (int) Math.ceil((double) (book.getTotalPage() * speed) / 90)
+      : totalDays;
+
+    return planMapper.toPreviewDto(book, dailyPages, dailyMinutes, totalDays, readingDates,
+      tooLong, recommendedDays);
   }
 
   /**
@@ -126,48 +129,43 @@ public class PlanService {
   }
 
   /**
-   * 플랜 최종 저장 (DB에 저장)
+   * 사용자의 요청 정보를 바탕으로 새로운 독서 플랜을 생성하고 저장한다.
    *
-   * @param requestDto 플랜 생성 요청 정보
-   * @return PlanResponseDto (저장된 플랜 요약 정보)
+   * 추천 일정을 사용할 경우, 제외 날짜 및 요일 정보를 반영하여 읽을 날짜를 계산한다.
+   * 그렇지 않은 경우 preview에서 전달받은 readingDates를 그대로 사용한다.
+   *
+   * @param dto 독서 플랜 생성 요청 DTO
+   * @return 생성된 독서 플랜에 대한 응답 DTO
    */
   @Transactional
-  public PlanResponseDto createPlan(PlanCreateRequestDto requestDto) {
+  public PlanResponseDto createPlan(PlanCreateRequestDto dto) {
+    // 1. 인증된 사용자 조회
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
     User user = userService.getCurrentUser(authentication);
 
-    Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
+    // 2. 도서 조회
+    Book book = bookService.findOrCreateBookByIsbn(dto.getBookIsbn());
 
-    List<LocalDate> readingDates = requestDto.getReadingDates() != null
-        ? requestDto.getReadingDates()
-        : calculateReadingDates(
-            requestDto.getStartDate(),
-            requestDto.getPeriodDays(),
-            requestDto.getExcludeDates(),
-            requestDto.getExcludeWeekdays()
-        );
+    // 3. 독서 날짜 계산
+    List<LocalDate> readingDates;
 
-    Boolean isFreePlan = requestDto.getIsFreePlan();
+    if (Boolean.TRUE.equals(dto.getUseRecommendedPlan())) {
+      // 추천 일정 사용 시, recommendedPeriodDays로 새로 계산
+      readingDates = calculateReadingDates(
+        dto.getStartDate(),
+        dto.getRecommendedPeriodDays(),
+        dto.getExcludeDates(),
+        dto.getExcludeWeekdays()
+      );
+    } else {
+      // preview에서 받은 readingDates 그대로 사용
+      readingDates = dto.getReadingDates();
+    }
 
-    Plan plan = new Plan();
-    plan.setUser(user);
-    plan.setBook(book);
-    plan.setStatus(PlanStatus.READING);
-    plan.setStartDate(
-        requestDto.getStartDate() != null
-            ? requestDto.getStartDate()
-            : readingDates.get(0)
-    );
-    plan.setIsFreePlan(requestDto.getIsFreePlan());
-    plan.setCurrentPage(0);
-    plan.setEndDate(
-        Boolean.TRUE.equals(isFreePlan) ? null : readingDates.get(readingDates.size() - 1));
-    plan.setReadingDates(convertListToJson(readingDates));
-    plan.setDailyPages(requestDto.getDailyPages());
-    plan.setDailyMinutes(requestDto.getDailyMinutes());
-
+    // 4. Plan 생성 (계산된 readingDates 사용)
+    Plan plan = planMapper.toEntity(user, book, dto, readingDates);
     Plan savedPlan = planRepository.save(plan);
+
     return planMapper.toResponseDto(savedPlan);
   }
 
@@ -181,7 +179,7 @@ public class PlanService {
    * @return 읽을 날짜 리스트
    */
   private List<LocalDate> calculateReadingDates(LocalDate startDate, Integer periodDays,
-      List<LocalDate> excludeDates, List<Integer> excludeWeekdays) {
+    List<LocalDate> excludeDates, List<Integer> excludeWeekdays) {
     if (Boolean.TRUE.equals(periodDays == null || startDate == null)) {
       return new ArrayList<>();
     }
@@ -196,7 +194,7 @@ public class PlanService {
         isExcluded = true;
       }
       if (excludeWeekdays != null && excludeWeekdays.contains(
-          current.getDayOfWeek().getValue() % 7)) {
+        current.getDayOfWeek().getValue() % 7)) {
         isExcluded = true;
       }
 
@@ -207,23 +205,6 @@ public class PlanService {
     }
 
     return result;
-  }
-
-  /**
-   * 리스트(Object)를 JSON 문자열로 변환
-   *
-   * @param list 변환할 리스트
-   * @return JSON 문자열
-   */
-  private String convertListToJson(Object list) {
-    if (list == null) {
-      return null;
-    }
-    try {
-      return objectMapper.writeValueAsString(list);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("JSON 변환 실패", e);
-    }
   }
 
   /**
@@ -238,8 +219,8 @@ public class PlanService {
 
     List<Plan> plans = planRepository.findAllByUser(user);
     return plans.stream()
-        .map(planMapper::toResponseDto)
-        .collect(Collectors.toList());
+      .map(planMapper::toResponseDto)
+      .collect(Collectors.toList());
   }
 
   /**
@@ -255,8 +236,8 @@ public class PlanService {
 
     List<Plan> plans = planRepository.findAllByUserAndStatus(user, status);
     return plans.stream()
-        .map(planMapper::toResponseDto)
-        .collect(Collectors.toList());
+      .map(planMapper::toResponseDto)
+      .collect(Collectors.toList());
   }
 
   /**
@@ -276,12 +257,12 @@ public class PlanService {
     LocalDate today = LocalDate.now();
 
     List<Plan> plans =
-        planRepository.findByUserAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-            user, PlanStatus.READING, today, today);
+      planRepository.findByUserAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+        user, PlanStatus.READING, today, today);
 
     return plans.stream()
-        .map(planMapper::toSummaryDto)
-        .collect(Collectors.toList());
+      .map(planMapper::toSummaryDto)
+      .collect(Collectors.toList());
   }
 
   /**
@@ -296,7 +277,7 @@ public class PlanService {
     User user = userService.getCurrentUser(authentication);
 
     Plan plan = planRepository.findByIdAndUser(planId, user)
-        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+      .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
 
     return planMapper.toDetailDto(plan);
   }
@@ -320,12 +301,12 @@ public class PlanService {
     LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
     List<Plan> plans = planRepository
-        .findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, endOfMonth,
-            startOfMonth);
+      .findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, endOfMonth,
+        startOfMonth);
 
     return plans.stream()
-        .map(planMapper::toSummaryDto)
-        .collect(Collectors.toList());
+      .map(planMapper::toSummaryDto)
+      .collect(Collectors.toList());
   }
 
   /**
@@ -340,11 +321,11 @@ public class PlanService {
     User user = userService.getCurrentUser(authentication);
 
     List<Plan> plans = planRepository
-        .findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
+      .findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
 
     return plans.stream()
-        .map(planMapper::toSummaryDto)
-        .collect(Collectors.toList());
+      .map(planMapper::toSummaryDto)
+      .collect(Collectors.toList());
   }
 
   /**
@@ -358,7 +339,7 @@ public class PlanService {
     User user = userService.getCurrentUser(authentication);
 
     Plan plan = planRepository.findByIdAndUser(planId, user)
-        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+      .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
 
     if (!plan.getStatus().equals(PlanStatus.READING)) {
       throw new ApiException(ErrorCode.INVALID_PLAN_STATUS);
@@ -381,7 +362,7 @@ public class PlanService {
     User user = userService.getCurrentUser(authentication);
 
     Plan plan = planRepository.findByIdAndUser(planId, user)
-        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+      .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
 
     if (plan.getIsFreePlan() != null && plan.getIsFreePlan()) {
       throw new ApiException(ErrorCode.INVALID_PLAN_EXTENSION);
@@ -402,7 +383,7 @@ public class PlanService {
     User user = userService.getCurrentUser(authentication);
 
     Plan plan = planRepository.findByIdAndUser(planId, user)
-        .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
+      .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
 
     planRepository.delete(plan);
   }

@@ -46,9 +46,11 @@ public enum ErrorCode {
 
   // CATEGORY
   CATEGORY_SAVE_FAILED(500, "CA001", "Failed to save category", LogLevel.ERROR),
+  CATEGORY_NOT_FOUND(404, "CA002", "Category not found", LogLevel.WARN),
 
   // SECURE
-  UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN);
+  UNAUTHENTICATED(401, "SC001", "User not authenticated", LogLevel.WARN),
+  ;
 
   private final int status;
   private final String code;

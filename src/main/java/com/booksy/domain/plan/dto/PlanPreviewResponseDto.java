@@ -18,6 +18,7 @@ public class PlanPreviewResponseDto {
   private String publisher;
   private LocalDate publishedDate;
   private int totalPage;
+  
   private Boolean isFreePlan;
 
   private int dailyPages;
@@ -25,4 +26,8 @@ public class PlanPreviewResponseDto {
   private int totalDurationDays;
 
   private List<LocalDate> readingDates;
+
+  // 기간이 적절하지 않은 경우 플랜 기간 수정 유도
+  private boolean tooLong;
+  private int recommendedPeriodDays;
 }

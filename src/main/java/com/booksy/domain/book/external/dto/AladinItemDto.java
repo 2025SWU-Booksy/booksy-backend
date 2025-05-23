@@ -13,5 +13,6 @@ public class AladinItemDto {
   private SubInfoDto subInfo;  // 응답 구조가 중첩 JSON
   private String cover;
   private Long categoryId;
-
+  private String categoryName;
+  private String description;
 }
