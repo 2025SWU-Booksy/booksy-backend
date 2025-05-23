@@ -401,12 +401,13 @@ public class PlanService {
     planRepository.deleteByIdsAndUser(planIds, user);
   }
 
-
-  @Transactional(readOnly = true)
-  public List<String> getWishlistedBookIsbns(Integer userId) {
-    return planRepository.findIsbnsByUserIdAndStatus(userId, PlanStatus.WISHLIST);
-  }
-
+  /**
+   * 도서를 위시리스트에 추가한다.
+   *
+   * 이미 위시리스트에 존재하는 경우 중복 추가를 방지하며, 존재하지 않을 경우 빈 Plan(PlanStatus = WISHLIST)을 생성한다.
+   *
+   * @param bookIsbn 추가할 도서의 ISBN13
+   */
   @Transactional
   public void addToWishlist(String bookIsbn) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -427,6 +428,14 @@ public class PlanService {
     planRepository.save(wishlistPlan);
   }
 
+  /**
+   * 도서를 위시리스트에서 제거한다.
+   *
+   * 해당 도서가 위시리스트에 존재할 경우에만 삭제를 수행하며,
+   * 존재하지 않으면 아무 작업도 하지 않는다.
+   *
+   * @param bookIsbn 제거할 도서의 ISBN13
+   */
   @Transactional
   public void removeFromWishlist(String bookIsbn) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

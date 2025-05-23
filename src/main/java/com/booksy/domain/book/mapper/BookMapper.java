@@ -42,18 +42,6 @@ public class BookMapper {
   }
 
   /**
-   * Book 리스트 → BookResponseDto 리스트 변환
-   *
-   * @param books Book 객체 리스트
-   * @return BookResponseDto 리스트
-   */
-  public List<BookResponseDto> toDtoList(List<Book> books) {
-    return books.stream()
-      .map(this::toDto)
-      .collect(Collectors.toList());
-  }
-
-  /**
    * BookResponseDto → Book 엔티티 변환
    */
   public Book toEntity(BookResponseDto dto, Category category) {

@@ -69,7 +69,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
   // 이미 위시리스트에 존재하는지 확인 (중복 추가 방지)
   boolean existsByUserIdAndBookIsbnAndStatus(Integer userId, String isbn, PlanStatus status);
 
-  //
+  // 위시리스트 삭제를 위한 특정 플랜 조회
   Optional<Plan> findByUserAndBookIsbnAndStatus(User user, String isbn, PlanStatus status);
 
 }

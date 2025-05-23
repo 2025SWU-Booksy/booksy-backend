@@ -189,13 +189,24 @@ public class PlanController {
     return ResponseEntity.noContent().build();
   }
 
-
+  /**
+   * 도서를 위시리스트에 추가
+   *
+   * @param isbn 도서 isbn
+   * @return 200 OK (성공 시 응답 본문 없음)
+   */
   @PostMapping("/wishlist/{isbn}")
   public ResponseEntity<Void> addToWishlist(@PathVariable String isbn) {
     planService.addToWishlist(isbn);
     return ResponseEntity.ok().build();
   }
-  
+
+  /**
+   * 도서를 위시리스트에서 삭제
+   *
+   * @param isbn 도서 isbn
+   * @return 204 No Content
+   */
   @DeleteMapping("/wishlist/{isbn}")
   public ResponseEntity<Void> removeFromWishlist(@PathVariable String isbn) {
     planService.removeFromWishlist(isbn);
