@@ -77,6 +77,28 @@ public class BookMapper {
   /**
    * AladinItemDto → BookResponseDto 변환
    */
+  public BookResponseDto toDto(AladinItemDto item, boolean isWishlisted) {
+    if (item == null) {
+      return null;
+    }
+
+    SubInfoDto sub = item.getSubInfo();
+
+    return BookResponseDto.builder()
+      .isbn(item.getIsbn13())
+      .title(item.getTitle())
+      .author(item.getAuthor())
+      .publisher(item.getPublisher())
+      .publishedDate(parseDate(item.getPubDate()))
+      .totalPage(sub != null ? sub.getItemPage() : 0)
+      .imageUrl(item.getCover())
+      .description(item.getDescription())
+      .categoryName(item.getCategoryName())
+      .categoryId(item.getCategoryId())
+      .isWishlisted(isWishlisted)
+      .build();
+  }
+
   public BookResponseDto toDto(AladinItemDto item) {
     if (item == null) {
       return null;

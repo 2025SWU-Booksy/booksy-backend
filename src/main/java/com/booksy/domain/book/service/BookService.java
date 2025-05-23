@@ -11,10 +11,18 @@ import com.booksy.domain.book.mapper.BookMapper;
 import com.booksy.domain.book.repository.BookRepository;
 import com.booksy.domain.category.entity.Category;
 import com.booksy.domain.category.repository.CategoryRepository;
+import com.booksy.domain.plan.repository.PlanRepository;
+import com.booksy.domain.plan.type.PlanStatus;
+import com.booksy.domain.user.entity.User;
+import com.booksy.domain.user.service.UserService;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +38,8 @@ public class BookService {
   private final BookExternalClient bookExternalClient;
   private final LibraryExternalClient libraryExternalClient;
   private final CategoryRepository categoryRepository;
+  private final UserService userService;
+  private final PlanRepository planRepository;
 
   /**
    * ISBN을 기반으로 내부 DB에 저장된 도서 정보를 조회
@@ -54,7 +64,24 @@ public class BookService {
    */
   @Transactional(readOnly = true)
   public List<BookResponseDto> searchBooksByKeyword(String keyword, int limit, String sort) {
-    return bookExternalClient.searchBooksByKeyword(keyword, limit, sort);
+    // 0. 사용자 인증 및 조회
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    // 1. 외부 API로 도서 검색하기
+    List<BookResponseDto> bookList = bookExternalClient.searchBooksByKeyword(keyword, limit, sort);
+
+    // 2. 유저의 위시리스트 플랜 ISBN 리스트 조회
+    List<String> wishlistedIsbns = planRepository.findIsbnsByUserIdAndStatus(user.getId(),
+      PlanStatus.WISHLIST);
+
+    // 3. 비교 후 DTO에 위시리스트 여부 표시
+    Set<String> wishlistSet = new HashSet<>(wishlistedIsbns);
+    for (BookResponseDto dto : bookList) {
+      dto.setWishlisted(wishlistSet.contains(dto.getIsbn()));
+    }
+    
+    return bookList;
   }
 
   /**
@@ -65,12 +92,16 @@ public class BookService {
    */
   @Transactional(readOnly = true)
   public BookResponseDto getBookDetailFromAladin(String isbn) {
-    return bookExternalClient.getBookByIsbnFromAladin(isbn);
+
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    return bookExternalClient.getBookByIsbnFromAladin(isbn, user.getId());
   }
 
   /**
    * ISBN으로 책 정보를 조회하고, 없으면 알라딘 API에서 가져와 저장
-   * <p>
+   *
    * 1. 내부 DB(Book 테이블)에서 ISBN으로 조회 2. 존재하지 않으면 → 알라딘 API 호출하여 책 정보를 가져옴 3. 가져온 정보를 Book 엔티티로 변환하여
    * DB에 저장
    *
@@ -80,10 +111,14 @@ public class BookService {
    */
   @Transactional
   public Book findOrCreateBookByIsbn(String isbn) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
     return bookRepository.findById(isbn)
       .orElseGet(() -> {
         // 알라딘 API 호출
-        BookResponseDto externalBook = bookExternalClient.getBookByIsbnFromAladin(isbn);
+        BookResponseDto externalBook = bookExternalClient.getBookByIsbnFromAladin(isbn,
+          user.getId());
 
         if (externalBook == null) {
           throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
@@ -111,7 +146,25 @@ public class BookService {
    */
   @Transactional(readOnly = true)
   public List<BookResponseDto> getBooksByCategory(String categoryId, int limit, String sort) {
-    return bookExternalClient.searchBooksByCategory(categoryId, limit, sort);
+    // 0. 사용자 인증 및 조회
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    // 1. 외부 API로 도서 리스트 가져오기
+    List<BookResponseDto> bookList = bookExternalClient.searchBooksByCategory(categoryId, limit,
+      sort);
+
+    // 2. 유저의 위시리스트 플랜 ISBN 리스트 조회
+    List<String> wishlistedIsbns = planRepository.findIsbnsByUserIdAndStatus(user.getId(),
+      PlanStatus.WISHLIST);
+
+    // 3. 비교 후 DTO에 위시리스트 여부 표시
+    Set<String> wishlistSet = new HashSet<>(wishlistedIsbns);
+    for (BookResponseDto dto : bookList) {
+      dto.setWishlisted(wishlistSet.contains(dto.getIsbn()));
+    }
+
+    return bookList;
   }
 
   /**

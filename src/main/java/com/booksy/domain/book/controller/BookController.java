@@ -7,7 +7,11 @@ import com.booksy.domain.book.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,9 +42,9 @@ public class BookController {
    */
   @GetMapping("/search")
   public ResponseEntity<List<BookResponseDto>> searchBooks(
-      @RequestParam String keyword,
-      @RequestParam(defaultValue = "10") int limit,
-      @RequestParam(defaultValue = "accuracy") String sort
+    @RequestParam String keyword,
+    @RequestParam(defaultValue = "10") int limit,
+    @RequestParam(defaultValue = "accuracy") String sort
   ) {
     List<BookResponseDto> result = bookService.searchBooksByKeyword(keyword, limit, sort);
     return ResponseEntity.ok(result);
@@ -68,9 +72,9 @@ public class BookController {
    */
   @GetMapping("/category")
   public List<BookResponseDto> getBooksByCategory(
-      @RequestParam String categoryId,
-      @RequestParam(defaultValue = "10") int limit,
-      @RequestParam(defaultValue = "SalesPoint") String sort
+    @RequestParam String categoryId,
+    @RequestParam(defaultValue = "10") int limit,
+    @RequestParam(defaultValue = "popular") String sort
   ) {
     return bookService.getBooksByCategory(categoryId, limit, sort);
   }
@@ -86,13 +90,13 @@ public class BookController {
    */
   @GetMapping("/{isbn}/libraries/nearby")
   public ResponseEntity<List<LibraryLocationResponseDto>> getNearbyLibrariesWithBook(
-      @PathVariable String isbn,
-      @RequestParam double lat,
-      @RequestParam double lng,
-      @RequestParam(defaultValue = "2.0") double radius
+    @PathVariable String isbn,
+    @RequestParam double lat,
+    @RequestParam double lng,
+    @RequestParam(defaultValue = "2.0") double radius
   ) {
     List<LibraryLocationResponseDto> response = bookService.getNearbyLibrariesWithBook(isbn, lat,
-        lng, radius);
+      lng, radius);
     return ResponseEntity.ok(response);
   }
 
@@ -105,8 +109,8 @@ public class BookController {
    */
   @GetMapping("/{isbn}/libraries/{libCode}/availability")
   public ResponseEntity<BookAvailability> getBookAvailability(
-      @PathVariable String isbn,
-      @PathVariable String libCode
+    @PathVariable String isbn,
+    @PathVariable String libCode
   ) {
     BookAvailability result = bookService.getBookAvailability(isbn, libCode);
     return ResponseEntity.ok(result);

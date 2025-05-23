@@ -5,6 +5,8 @@ import com.booksy.domain.book.external.dto.AladinItemResultDto;
 import com.booksy.domain.book.external.type.AladinListType;
 import com.booksy.domain.book.external.type.AladinSortType;
 import com.booksy.domain.book.mapper.BookMapper;
+import com.booksy.domain.plan.repository.PlanRepository;
+import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
 import java.util.Collections;
@@ -26,6 +28,7 @@ public class BookExternalClient {
 
   private final RestTemplate restTemplate = new RestTemplate();
   private final BookMapper bookMapper;
+  private final PlanRepository planRepository;
 
   @Value("${external.aladin.api-key}")
   private String apiKey;
@@ -64,7 +67,7 @@ public class BookExternalClient {
   }
 
   /**
-   * 알라딘 API에 ISBN 기반 단일 도서 상세 조회 요청을 보낸다.
+   * 알라딘 API에 ISBN 기반 단일 도서 상세 조회 요청을 보낸다. (AI 가공용)
    *
    * @param isbn 조회할 도서의 ISBN
    * @return BookResponseDto (정제된 도서 정보)
@@ -88,6 +91,37 @@ public class BookExternalClient {
     }
 
     return bookMapper.toDto(response.getItem().get(0));
+  }
+
+  /**
+   * 알라딘 API에 ISBN 기반 단일 도서 상세 조회 요청을 보낸다. (조회용)
+   *
+   * @param isbn   조회할 도서의 ISBN
+   * @param userId 로그인한 유저
+   * @return BookResponseDto (정제된 도서 정보)
+   * @exception ApiException 알라딘 API로부터 응답이 없거나 결과가 비어있을 경우
+   */
+  public BookResponseDto getBookByIsbnFromAladin(String isbn, Integer userId) {
+    String url = UriComponentsBuilder.fromHttpUrl(
+        "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
+      .queryParam("ttbkey", apiKey)
+      .queryParam("itemIdType", "ISBN13")
+      .queryParam("ItemId", isbn)
+      .queryParam("output", "js")
+      .queryParam("Version", "20131101")
+      .toUriString();
+
+    AladinItemResultDto response = restTemplate.getForObject(url,
+      AladinItemResultDto.class);
+
+    if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
+      throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
+    }
+
+    boolean isWishlisted = planRepository.existsByUserIdAndBookIsbnAndStatus(userId, isbn,
+      PlanStatus.WISHLIST);
+
+    return bookMapper.toDto(response.getItem().get(0), isWishlisted);
   }
 
   /**

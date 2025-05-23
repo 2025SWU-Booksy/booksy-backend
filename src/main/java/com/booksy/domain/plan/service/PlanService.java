@@ -401,4 +401,39 @@ public class PlanService {
     planRepository.deleteByIdsAndUser(planIds, user);
   }
 
+
+  @Transactional(readOnly = true)
+  public List<String> getWishlistedBookIsbns(Integer userId) {
+    return planRepository.findIsbnsByUserIdAndStatus(userId, PlanStatus.WISHLIST);
+  }
+
+  @Transactional
+  public void addToWishlist(String bookIsbn) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    // 중복 추가 방지
+    if (planRepository.existsByUserIdAndBookIsbnAndStatus(user.getId(), bookIsbn,
+      PlanStatus.WISHLIST)) {
+      return;
+    }
+
+    // 책 정보 조회 또는 생성
+    Book book = bookService.findOrCreateBookByIsbn(bookIsbn);
+
+    // 빈 플랜 생성
+    Plan wishlistPlan = planMapper.toWishlistEntity(user, book);
+
+    planRepository.save(wishlistPlan);
+  }
+
+  @Transactional
+  public void removeFromWishlist(String bookIsbn) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(authentication);
+
+    planRepository.findByUserAndBookIsbnAndStatus(user, bookIsbn, PlanStatus.WISHLIST)
+      .ifPresent(planRepository::delete);
+  }
+
 }

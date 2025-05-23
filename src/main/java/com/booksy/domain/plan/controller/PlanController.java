@@ -44,7 +44,7 @@ public class PlanController {
    */
   @PostMapping("/preview")
   public ResponseEntity<PlanPreviewResponseDto> previewPlan(
-      @RequestBody PlanCreateRequestDto requestDto
+    @RequestBody PlanCreateRequestDto requestDto
   ) {
     PlanPreviewResponseDto preview = planService.previewPlan(requestDto);
     return ResponseEntity.ok(preview);
@@ -60,7 +60,7 @@ public class PlanController {
    */
   @PostMapping
   public ResponseEntity<PlanResponseDto> createPlan(
-      @RequestBody PlanCreateRequestDto requestDto
+    @RequestBody PlanCreateRequestDto requestDto
   ) {
     PlanResponseDto savedPlan = planService.createPlan(requestDto);
     return ResponseEntity.ok(savedPlan);
@@ -84,7 +84,7 @@ public class PlanController {
    */
   @GetMapping
   public ResponseEntity<List<PlanResponseDto>> getPlansByStatus(
-      @RequestParam PlanStatus status
+    @RequestParam PlanStatus status
   ) {
     List<PlanResponseDto> plans = planService.getPlansByStatus(status);
     return ResponseEntity.ok(plans);
@@ -121,8 +121,8 @@ public class PlanController {
    */
   @GetMapping("/calendar")
   public ResponseEntity<List<PlanSummaryResponseDto>> getPlansForCalendar(
-      @RequestParam int year,
-      @RequestParam int month) {
+    @RequestParam int year,
+    @RequestParam int month) {
     return ResponseEntity.ok(planService.getPlansForCalendar(year, month));
   }
 
@@ -134,7 +134,7 @@ public class PlanController {
    */
   @GetMapping("/calendar/{date}")
   public ResponseEntity<List<PlanSummaryResponseDto>> getPlansByDate(
-      @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
     return ResponseEntity.ok(planService.getPlansByDate(date));
   }
 
@@ -159,8 +159,8 @@ public class PlanController {
    */
   @PatchMapping("/{planId}/extend")
   public ResponseEntity<Void> extendPlan(
-      @PathVariable Long planId,
-      @RequestBody @Valid PlanExtendRequestDto requestDto) {
+    @PathVariable Long planId,
+    @RequestBody @Valid PlanExtendRequestDto requestDto) {
     planService.extendPlan(planId, requestDto.getNewEndDate());
     return ResponseEntity.ok().build();
   }
@@ -189,4 +189,16 @@ public class PlanController {
     return ResponseEntity.noContent().build();
   }
 
+
+  @PostMapping("/wishlist/{isbn}")
+  public ResponseEntity<Void> addToWishlist(@PathVariable String isbn) {
+    planService.addToWishlist(isbn);
+    return ResponseEntity.ok().build();
+  }
+  
+  @DeleteMapping("/wishlist/{isbn}")
+  public ResponseEntity<Void> removeFromWishlist(@PathVariable String isbn) {
+    planService.removeFromWishlist(isbn);
+    return ResponseEntity.noContent().build();
+  }
 }

@@ -180,5 +180,20 @@ public class PlanMapper {
     }
   }
 
+  /**
+   * 위시리스트용 빈 플랜 엔티티 생성
+   *
+   * @param user 사용자
+   * @param book 도서 정보
+   * @return Plan (PlanStatus = WISHLIST)
+   */
+  public Plan toWishlistEntity(User user, Book book) {
+    return Plan.builder()
+      .user(user)
+      .book(book)
+      .status(PlanStatus.WISHLIST)
+      .currentPage(0)
+      .build();
+  }
 
 }

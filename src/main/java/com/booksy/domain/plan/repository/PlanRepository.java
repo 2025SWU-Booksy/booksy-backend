@@ -24,17 +24,14 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
   // 오늘 날짜에 해당하는 READING 상태 플랜 조회 (오늘 읽을 책)
   List<Plan> findByUserAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-      User user, PlanStatus status, LocalDate today1, LocalDate today2);
+    User user, PlanStatus status, LocalDate today1, LocalDate today2);
 
   // 플랜 상세 조회
   Optional<Plan> findByIdAndUser(Long planId, User user);
 
   // 특정 날짜가 플랜 진행 기간에 포함되는 경우 조회 (user 기준)
   List<Plan> findAllByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-      User user, LocalDate date1, LocalDate date2);
-
-  // 특정 플랜 삭제
-  void deleteByIdAndUser(Long id, User user);
+    User user, LocalDate date1, LocalDate date2);
 
   // 다중 플랜 삭제
   @Modifying
@@ -43,26 +40,37 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
   // 플랜 완료 시 완독 뱃지 조건 검사
   @Query("""
-        SELECT COUNT(p)
-        FROM Plan p
-        WHERE p.user.id = :userId
-          AND p.status = :status
-      """)
+      SELECT COUNT(p)
+      FROM Plan p
+      WHERE p.user.id = :userId
+        AND p.status = :status
+    """)
   int countByUserIdAndStatus(@Param("userId") Integer userId,
-      @Param("status") PlanStatus status);
+    @Param("status") PlanStatus status);
 
   // 플랜 완료 시 장르 뱃지 조건 검사 (문제 없음)
   @Query("""
-        SELECT COUNT(p)
-        FROM Plan p
-        JOIN p.book b
-        JOIN b.category c
-        WHERE p.user.id = :userId
-          AND p.status = 'COMPLETED'
-          AND (c.id = :categoryId OR c.parent.id = :categoryId)
-      """)
+      SELECT COUNT(p)
+      FROM Plan p
+      JOIN p.book b
+      JOIN b.category c
+      WHERE p.user.id = :userId
+        AND p.status = 'COMPLETED'
+        AND (c.id = :categoryId OR c.parent.id = :categoryId)
+    """)
   int countCompletedBooksByCategory(@Param("userId") Integer userId,
-      @Param("categoryId") Long categoryId);
+    @Param("categoryId") Long categoryId);
+
+  // 상태가 위시리스트인 플랜 조회
+  @Query("SELECT p.book.isbn FROM Plan p WHERE p.user.id = :userId AND p.status = :status")
+  List<String> findIsbnsByUserIdAndStatus(@Param("userId") Integer userId,
+    @Param("status") PlanStatus status);
+
+  // 이미 위시리스트에 존재하는지 확인 (중복 추가 방지)
+  boolean existsByUserIdAndBookIsbnAndStatus(Integer userId, String isbn, PlanStatus status);
+
+  //
+  Optional<Plan> findByUserAndBookIsbnAndStatus(User user, String isbn, PlanStatus status);
 
 }
 
