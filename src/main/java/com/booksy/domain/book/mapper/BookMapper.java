@@ -37,7 +37,7 @@ public class BookMapper {
       .publishedDate(book.getPublishedDate())
       .totalPage(book.getTotalPage())
       .imageUrl(book.getImageUrl())
-      .description(book.getFullDescription())
+      .description(book.getDescription())
       .build();
   }
 
@@ -69,7 +69,7 @@ public class BookMapper {
       .publishedDate(dto.getPublishedDate())
       .totalPage(dto.getTotalPage())
       .imageUrl(dto.getImageUrl())
-      .fullDescription(dto.getDescription())
+      .description(dto.getDescription())
       .category(category)
       .build();
   }
@@ -83,19 +83,6 @@ public class BookMapper {
     }
 
     SubInfoDto sub = item.getSubInfo();
-    String description = null;
-
-    // ❗ 임시값 - 수정예정
-    if (sub != null) {
-      if (sub.getFulldescription() != null && !sub.getFulldescription().isBlank()) {
-        description = sub.getFulldescription();
-      } else if (sub.getFulldescription2() != null && !sub.getFulldescription2().isBlank()) {
-        description = sub.getFulldescription2(); // fallback
-      } else {
-        description =
-          "";
-      }
-    }
 
     return BookResponseDto.builder()
       .isbn(item.getIsbn13())
@@ -103,9 +90,10 @@ public class BookMapper {
       .author(item.getAuthor())
       .publisher(item.getPublisher())
       .publishedDate(parseDate(item.getPubDate()))
-      .totalPage(item.getSubInfo() != null ? item.getSubInfo().getItemPage() : 0)
+      .totalPage(sub != null ? sub.getItemPage() : 0)
       .imageUrl(item.getCover())
-      .description(description)
+      .description(item.getDescription())
+      .categoryName(item.getCategoryName())
       .categoryId(item.getCategoryId())
       .build();
   }

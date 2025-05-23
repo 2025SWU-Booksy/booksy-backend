@@ -29,26 +29,33 @@ public class OpenAiClient {
 
   public String askDifficulty(String title, String summary) {
     String prompt = String.format(
-        """
-            당신은 문학 작품의 난이도를 평가하는 독서 큐레이터 AI입니다.
+      """
+        당신은 다양한 분야의 도서를 분석해 난이도를 평가하는 독서 큐레이터 AI입니다.
+
+        다음 책의 난이도를 평가해주세요.
+
+        📌 평가 기준:
+        - 난이도는 반드시 ["초급", "중급", "고급"] 중 하나로 선택
+        - 문체의 복잡성, 내용의 깊이, 주제의 난해함, 정보량, 구성 방식, 용어의 이해 난이도 등을 종합적으로 고려
+        - 소설, 에세이, 자기계발, 인문, 과학, 예술 등 모든 분야의 도서를 공정하게 평가
+        - 독자의 접근성(읽기 쉬움/이해 쉬움) 관점에서 판단
+
+        📌 응답 형식:
+        아래와 같은 **JSON 형식**으로 응답해 주세요.
+        ※ 형식만 참고하고, 응답 내용은 자유롭게 작성하세요.
+        ```json
+        {"level": "중급", "reason": "내용이 다소 깊고 배경지식이 요구됨"}
+        ```
+        ---
                 
-            다음 소설에 대해 난이도를 평가해주세요.
-                
-            - 난이도는 반드시 ["초급", "중급", "고급"] 중 하나로 선택
-            - 문체의 난이도, 주제의 복잡성, 구조의 간결함, 전문용어 사용 여부 등을 종합적으로 고려
-            - 다양한 해석 가능성보다 접근성 중심으로 판단
-            - 반드시 JSON 형식으로 응답: {"level": "중급", "reason": "전문용어가 많음"}
-                
-            ---
-                
-            책 제목: %s
-            책 소개: %s
-            """, title, summary
+        책 제목: %s
+        책 소개: %s
+        """, title, summary
     );
 
     ChatRequest request = new ChatRequest("gpt-3.5-turbo", List.of(
-        new Message("system", "당신은 책 난이도를 평가하는 AI입니다."),
-        new Message("user", prompt)
+      new Message("system", "당신은 책 난이도를 평가하는 AI입니다."),
+      new Message("user", prompt)
     ));
 
     HttpHeaders headers = new HttpHeaders();
@@ -69,22 +76,22 @@ public class OpenAiClient {
 
   public String askRecommendation(int age, String gender) {
     String prompt = String.format(
-        """
-            %d세 %s에게 인기 있는 실제 도서 5권을 추천해줘.
-                    
-            조건:
-            - 반드시 존재하는 책만 추천해줘
-            - 각 책은 제목(title), 저자(author), ISBN-13(isbn)을 포함해줘
-            - 응답은 다음 형식의 JSON 배열로 해줘:
-              [{"title": "...", "author": "...", "isbn": "..."}, ...]
-            """,
-        age,
-        gender.equalsIgnoreCase("F") ? "여성" : "남성"
+      """
+        %d세 %s에게 인기 있는 실제 도서 5권을 추천해줘.
+                
+        조건:
+        - 반드시 존재하는 책만 추천해줘
+        - 각 책은 제목(title), 저자(author), ISBN-13(isbn)을 포함해줘
+        - 응답은 다음 형식의 JSON 배열로 해줘:
+          [{"title": "...", "author": "...", "isbn": "..."}, ...]
+        """,
+      age,
+      gender.equalsIgnoreCase("F") ? "여성" : "남성"
     );
 
     ChatRequest request = new ChatRequest("gpt-3.5-turbo", List.of(
-        new Message("system", "당신은 독서 큐레이터 AI입니다."),
-        new Message("user", prompt)
+      new Message("system", "당신은 독서 큐레이터 AI입니다."),
+      new Message("user", prompt)
     ));
 
     HttpHeaders headers = new HttpHeaders();
@@ -97,11 +104,11 @@ public class OpenAiClient {
 
     try {
       return objectMapper.readTree(response.getBody())
-          .get("choices")
-          .get(0)
-          .get("message")
-          .get("content")
-          .asText();
+        .get("choices")
+        .get(0)
+        .get("message")
+        .get("content")
+        .asText();
     } catch (Exception e) {
       throw new RuntimeException("GPT 도서 추천 응답 파싱 실패", e);
     }

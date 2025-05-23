@@ -5,8 +5,6 @@ import lombok.Data;
 @Data
 public class SubInfoDto {
 
+  private String subTitle;
   private int itemPage;
-
-  private String fulldescription;
-  private String fulldescription2;
 }

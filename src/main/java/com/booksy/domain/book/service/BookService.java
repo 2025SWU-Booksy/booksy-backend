@@ -40,7 +40,7 @@ public class BookService {
   @Transactional(readOnly = true)
   public BookResponseDto getBookByIsbn(String isbn) {
     Book book = bookRepository.findById(isbn)
-        .orElseThrow(() -> new ApiException(ErrorCode.BOOK_NOT_FOUND_INTERNAL));
+      .orElseThrow(() -> new ApiException(ErrorCode.BOOK_NOT_FOUND_INTERNAL));
     return bookMapper.toDto(book);
   }
 
@@ -76,28 +76,29 @@ public class BookService {
    *
    * @param isbn 조회할 도서의 ISBN
    * @return Book 엔티티 (기존 또는 새로 저장된 값)
-   * @throws ApiException BOOK_NOT_FOUND_EXTERNAL (알라딘 API에 결과 없을 때)
+   * @exception ApiException BOOK_NOT_FOUND_EXTERNAL (알라딘 API에 결과 없을 때)
    */
   @Transactional
   public Book findOrCreateBookByIsbn(String isbn) {
     return bookRepository.findById(isbn)
-        .orElseGet(() -> {
-          // 알라딘 API 호출
-          BookResponseDto externalBook = bookExternalClient.getBookByIsbnFromAladin(isbn);
+      .orElseGet(() -> {
+        // 알라딘 API 호출
+        BookResponseDto externalBook = bookExternalClient.getBookByIsbnFromAladin(isbn);
 
-          if (externalBook == null) {
-            throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
-          }
+        if (externalBook == null) {
+          throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
+        }
 
-          // 카테고리 ID 가져오기
-          Long categoryId = externalBook.getCategoryId();
-          
-          Category category = categoryRepository.findById(categoryId).get();
+        // 카테고리 ID 가져오기
+        Long categoryId = externalBook.getCategoryId();
 
-          Book newBook = bookMapper.toEntity(externalBook, category);
+        Category category = categoryRepository.findById(categoryId)
+          .orElseThrow(() -> new ApiException(ErrorCode.CATEGORY_NOT_FOUND));
 
-          return bookRepository.save(newBook);
-        });
+        Book newBook = bookMapper.toEntity(externalBook, category);
+
+        return bookRepository.save(newBook);
+      });
   }
 
   /**
@@ -124,7 +125,7 @@ public class BookService {
    */
   @Transactional(readOnly = true)
   public List<LibraryLocationResponseDto> getNearbyLibrariesWithBook(
-      String isbn, double lat, double lng, double radius
+    String isbn, double lat, double lng, double radius
   ) {
     // 책이 존재하는지 검증 (내부 또는 외부로 확인)
     findOrCreateBookByIsbn(isbn);
@@ -134,13 +135,13 @@ public class BookService {
 
     // 응답 DTO로 변환
     return libraries.stream()
-        .map(lib -> LibraryLocationResponseDto.builder()
-            .libCode(lib.getLibCode())
-            .libraryName(lib.getLibraryName())
-            .latitude(lib.getLatitude())
-            .longitude(lib.getLongitude())
-            .build())
-        .toList();
+      .map(lib -> LibraryLocationResponseDto.builder()
+        .libCode(lib.getLibCode())
+        .libraryName(lib.getLibraryName())
+        .latitude(lib.getLatitude())
+        .longitude(lib.getLongitude())
+        .build())
+      .toList();
   }
 
   /**
