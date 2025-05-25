@@ -9,11 +9,16 @@ import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -44,20 +49,33 @@ public class BookExternalClient {
     throws ApiException {
     String sortOption = AladinSortType.fromInput(sort);
 
-    String url = UriComponentsBuilder.fromHttpUrl(
-        "https://www.aladin.co.kr/ttb/api/ItemSearch.aspx")
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+
+    HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+    URI uri = UriComponentsBuilder.fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemSearch.aspx")
       .queryParam("ttbkey", apiKey)
       .queryParam("Query", keyword)
-      .queryParam("QueryType", "Keyword")
+      .queryParam("QueryType", "Title")
       .queryParam("SearchTarget", "Book")
       .queryParam("MaxResults", maxResults)
+      .queryParam("start", 1)
       .queryParam("Sort", sortOption)
       .queryParam("output", "js")
       .queryParam("Version", "20131101")
-      .toUriString();
+      .build()
+      .encode()
+      .toUri();
 
-    AladinItemResultDto response =
-      restTemplate.getForObject(url, AladinItemResultDto.class);
+    ResponseEntity<AladinItemResultDto> responseEntity = restTemplate.exchange(
+      uri,
+      HttpMethod.GET,
+      entity,
+      AladinItemResultDto.class
+    );
+
+    AladinItemResultDto response = responseEntity.getBody();
 
     if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
       return Collections.emptyList();
