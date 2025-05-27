@@ -57,7 +57,7 @@ public class BookExternalClient {
     URI uri = UriComponentsBuilder.fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemSearch.aspx")
       .queryParam("ttbkey", apiKey)
       .queryParam("Query", keyword)
-      .queryParam("QueryType", "Title")
+      .queryParam("QueryType", "Keyword")
       .queryParam("SearchTarget", "Book")
       .queryParam("MaxResults", maxResults)
       .queryParam("start", 1)
