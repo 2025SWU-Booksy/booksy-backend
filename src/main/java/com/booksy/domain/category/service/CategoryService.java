@@ -56,7 +56,7 @@ public class CategoryService {
     List<Category> categories;
 
     if (parentId == null) {
-      categories = categoryRepository.findByParentIsNull();
+      categories = categoryRepository.findByParentIsNullAndDepth(1);
     } else {
       categories = categoryRepository.findByParentId(parentId);
     }
