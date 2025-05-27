@@ -39,6 +39,9 @@ public enum ErrorCode {
   LIBRARY_API_UNAVAILABLE(502, "L001", "Failed to fetch data from library API", LogLevel.ERROR),
   INVALID_COORDINATES(400, "L002", "Invalid or missing coordinates", LogLevel.WARN),
 
+  // RANKING
+  INVALID_SCOPE_TYPE(400, "R001", "Invalid scope type", LogLevel.WARN),
+  
   // PLAN
   PLAN_NOT_FOUND(404, "P001", "Plan not found", LogLevel.WARN),
   INVALID_PLAN_STATUS(400, "P002", "Invalid plan status", LogLevel.WARN),
