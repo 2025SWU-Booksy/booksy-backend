@@ -18,7 +18,8 @@ public class PlanPreviewResponseDto {
   private String publisher;
   private LocalDate publishedDate;
   private int totalPage;
-  
+  private String imageUrl;
+
   private Boolean isFreePlan;
 
   private int dailyPages;

@@ -51,6 +51,7 @@ public class PlanMapper {
       .publisher(book.getPublisher())
       .publishedDate(book.getPublishedDate())
       .totalPage(book.getTotalPage())
+      .imageUrl(book.getImageUrl())
       .dailyPages(dailyPages)
       .dailyMinutes(dailyMinutes)
       .totalDurationDays(totalDays)
