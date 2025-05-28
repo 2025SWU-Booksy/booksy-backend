@@ -32,7 +32,7 @@ public class BookMapper {
     return BookResponseDto.builder()
       .isbn(book.getIsbn())
       .title(book.getTitle())
-      .author(book.getAuthor())
+      .author(cleanAuthorName(book.getAuthor()))
       .publisher(book.getPublisher())
       .publishedDate(book.getPublishedDate())
       .totalPage(book.getTotalPage())
@@ -52,7 +52,7 @@ public class BookMapper {
     return Book.builder()
       .isbn(dto.getIsbn())
       .title(dto.getTitle())
-      .author(dto.getAuthor())
+      .author(cleanAuthorName(dto.getAuthor()))
       .publisher(dto.getPublisher())
       .publishedDate(dto.getPublishedDate())
       .totalPage(dto.getTotalPage())
@@ -75,7 +75,7 @@ public class BookMapper {
     return BookResponseDto.builder()
       .isbn(item.getIsbn13())
       .title(item.getTitle())
-      .author(item.getAuthor())
+      .author(cleanAuthorName(item.getAuthor()))
       .publisher(item.getPublisher())
       .publishedDate(parseDate(item.getPubDate()))
       .totalPage(sub != null ? sub.getItemPage() : 0)
@@ -97,7 +97,7 @@ public class BookMapper {
     return BookResponseDto.builder()
       .isbn(item.getIsbn13())
       .title(item.getTitle())
-      .author(item.getAuthor())
+      .author(cleanAuthorName(item.getAuthor()))
       .publisher(item.getPublisher())
       .publishedDate(parseDate(item.getPubDate()))
       .totalPage(sub != null ? sub.getItemPage() : 0)
@@ -130,4 +130,16 @@ public class BookMapper {
       return null;
     }
   }
+
+  /**
+   * author 데이터에서 불필요한 부가정보 제거
+   */
+  private String cleanAuthorName(String rawAuthor) {
+    if (rawAuthor == null) {
+      return null;
+    }
+    // " (지은이)" 등 괄호 포함한 부가정보 제거
+    return rawAuthor.replaceAll("\\s*\\(.*?\\)", "").trim();
+  }
+
 }
