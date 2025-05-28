@@ -2,6 +2,7 @@ package com.booksy.domain.readinglog.repository;
 
 import com.booksy.domain.readinglog.entity.TimeRecord;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -65,5 +66,11 @@ public interface TimeRecordRepository extends JpaRepository<TimeRecord, Long> {
             AND DATE(tr.startTime) = :date
       """)
   int getTotalReadingMinutesByDate(@Param("userId") Integer userId, @Param("date") LocalDate date);
+
+  /**
+   * 특정 시간 범위에 해당하는 유저의 타이머 기록 전체 조회
+   */
+  List<TimeRecord> findByUserIdAndStartTimeBetween(Integer userId, LocalDateTime start,
+      LocalDateTime end);
 }
 

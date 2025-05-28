@@ -2,6 +2,7 @@ package com.booksy.domain.user.controller;
 
 import com.booksy.domain.user.dto.*;
 import com.booksy.domain.user.service.UserService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -108,5 +109,22 @@ public class UserController {
   @GetMapping("/users/{userId}")
   public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Integer userId) {
     return ResponseEntity.ok(userService.getUserProfile(userId));
+  }
+
+  /**
+   * 독서 통계 조회 API
+   *
+   * @param authentication 현재 로그인된 사용자 (JWT 인증)
+   * @param scope          조회 범위 ("day", "week", "month")
+   * @return 날짜/주/월 별 평균 독서 시간 목록
+   */
+  @GetMapping("/users/mypage/statistics")
+  public ResponseEntity<List<ReadingStatisticsItemDto>> getReadingStatistics(
+      Authentication authentication,
+      @RequestParam String scope
+  ) {
+    Integer userId = Integer.parseInt(authentication.getName());
+    List<ReadingStatisticsItemDto> response = userService.getReadingStatistics(userId, scope);
+    return ResponseEntity.ok(response);
   }
 }

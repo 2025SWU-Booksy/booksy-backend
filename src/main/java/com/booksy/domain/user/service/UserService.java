@@ -8,13 +8,6 @@ import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
 import com.booksy.domain.readinglog.repository.TimeRecordRepository;
 import com.booksy.domain.user.dto.*;
-import com.booksy.domain.user.dto.InfoResponse;
-import com.booksy.domain.user.dto.LoginRequest;
-import com.booksy.domain.user.dto.LoginResponse;
-import com.booksy.domain.user.dto.SignupRequest;
-import com.booksy.domain.user.dto.SignupResponse;
-import com.booksy.domain.user.dto.UpdateUserRequest;
-import com.booksy.domain.user.dto.UpdateUserResponse;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
@@ -22,8 +15,10 @@ import com.booksy.global.error.ErrorCode;
 import com.booksy.global.error.exception.ApiException;
 import com.booksy.global.util.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,24 +58,24 @@ public class UserService {
 
     // 닉네임이 null이면 → 이메일로 대체
     String nickname = request.getNickname() != null
-      ? request.getNickname()
-      : request.getEmail();
+        ? request.getNickname()
+        : request.getEmail();
 
     // 비밀번호 암호화
     String encodedPassword = passwordEncoder.encode(request.getPassword());
 
     // User 엔티티 생성
     User user = User.builder()
-      .email(request.getEmail())
-      .password(encodedPassword)
-      .age(request.getAge())
-      .gender(request.getGender())
-      .nickname(nickname)
-      .profileImage(request.getProfileImage())
-      .status(UserStatus.ACTIVE)
-      .isPushEnabled(true)
-      .favoriteGenres(new ArrayList<>())
-      .build();
+        .email(request.getEmail())
+        .password(encodedPassword)
+        .age(request.getAge())
+        .gender(request.getGender())
+        .nickname(nickname)
+        .profileImage(request.getProfileImage())
+        .status(UserStatus.ACTIVE)
+        .isPushEnabled(true)
+        .favoriteGenres(new ArrayList<>())
+        .build();
 
     // 선호 장르 저장
     if (request.getPreferredCategoryIds() != null) {
@@ -102,15 +97,15 @@ public class UserService {
     user.getFavoriteGenres().clear();
 
     List<UserCategory> newFavorites = categoryIds.stream()
-      .map(categoryId -> {
-        Category category = categoryRepository.findById(categoryId)
-          .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
-        return UserCategory.builder()
-          .user(user)
-          .category(category)
-          .build();
-      })
-      .toList();
+        .map(categoryId -> {
+          Category category = categoryRepository.findById(categoryId)
+              .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+          return UserCategory.builder()
+              .user(user)
+              .category(category)
+              .build();
+        })
+        .toList();
 
     user.getFavoriteGenres().addAll(newFavorites);
   }
@@ -158,21 +153,21 @@ public class UserService {
    */
   public InfoResponse getMyInfo(Integer userId) {
     User user = userRepository.findById(userId)
-      .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
     // 유저 선호 장르 ID 리스트 추출
     List<Long> preferredCategoryIds = user.getFavoriteGenres().stream()
-      .map(userCategory -> userCategory.getCategory().getId())
-      .toList();
+        .map(userCategory -> userCategory.getCategory().getId())
+        .toList();
 
     return InfoResponse.builder()
-      .email(user.getEmail())
-      .nickname(user.getNickname())
-      .age(user.getAge())
-      .gender(user.getGender())
-      .profileImage(user.getProfileImage())
-      .preferredCategoryIds(preferredCategoryIds)
-      .build();
+        .email(user.getEmail())
+        .nickname(user.getNickname())
+        .age(user.getAge())
+        .gender(user.getGender())
+        .profileImage(user.getProfileImage())
+        .preferredCategoryIds(preferredCategoryIds)
+        .build();
   }
 
   /**
@@ -183,7 +178,7 @@ public class UserService {
     try {
       // 사용자 조회
       User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+          .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
       // 새 비밀번호가 입력됐을 때만 처리
       if (request.getNewPassword() != null) {
@@ -236,7 +231,7 @@ public class UserService {
    */
   public void deactivateUser(Integer userId) {
     User user = userRepository.findById(userId)
-      .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
     user.updateStatus(UserStatus.INACTIVE); // 상태를 INACTIVE로 변경
     userRepository.save(user);
@@ -247,7 +242,7 @@ public class UserService {
    */
   public void restoreUser(Integer userId) {
     User user = userRepository.findById(userId)
-      .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
     user.updateStatus(UserStatus.ACTIVE);
     userRepository.save(user);
@@ -260,7 +255,7 @@ public class UserService {
   public User getCurrentUser(Authentication authentication) {
     String userId = authentication.getName(); // 토큰에 저장된 userId 추출
     return userRepository.findById(Integer.parseInt(userId))
-      .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+        .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
   }
 
   /**
@@ -315,5 +310,98 @@ public class UserService {
         .yesterdayReadingTime(formattedTime)
         .totalCompletedBooks(completedCount)
         .build();
+  }
+
+  /**
+   * 마이페이지 통계 API - 일/주/월 단위로 통계 조회
+   *
+   * @param userId 사용자 ID
+   * @param scope  통계 범위 (day, week, month)
+   * @return 통계 리스트 DTO
+   */
+  public List<ReadingStatisticsItemDto> getReadingStatistics(Integer userId, String scope) {
+    return switch (scope) {
+      case "day" -> getDailyStatistics(userId);
+      case "week" -> getWeeklyStatistics(userId);
+      case "month" -> getMonthlyStatistics(userId);
+      default -> throw new IllegalArgumentException("Invalid scope: " + scope);
+    };
+  }
+
+  /**
+   * 일 단위 통계 - 이번 달 1일부터 마지막일까지 날짜별 총 독서 시간
+   */
+  private List<ReadingStatisticsItemDto> getDailyStatistics(Integer userId) {
+    List<ReadingStatisticsItemDto> result = new ArrayList<>();
+    LocalDate today = LocalDate.now();
+    LocalDate firstDay = today.withDayOfMonth(1);
+    LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
+
+    for (LocalDate date = firstDay; !date.isAfter(lastDay); date = date.plusDays(1)) {
+      int totalMinutes = timeRecordRepository.getTotalReadingMinutesByDate(userId, date);
+      result.add(new ReadingStatisticsItemDto(
+          date.toString(),
+          formatToHHMM(totalMinutes),
+          formatToHHMM(totalMinutes)
+      ));
+    }
+    return result;
+  }
+
+  /**
+   * 주 단위 통계 - 최근 4주(일~토)의 총 독서 시간 및 평균 독서 시간 계산
+   */
+  private List<ReadingStatisticsItemDto> getWeeklyStatistics(Integer userId) {
+    List<ReadingStatisticsItemDto> result = new ArrayList<>();
+    LocalDate today = LocalDate.now();
+    LocalDate endOfWeek = today.with(DayOfWeek.SATURDAY);
+    for (int i = 3; i >= 0; i--) {
+      LocalDate end = endOfWeek.minusWeeks(i);
+      LocalDate start = end.minusDays(6);
+      int totalMinutes = 0;
+      for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+        totalMinutes += timeRecordRepository.getTotalReadingMinutesByDate(userId, d);
+      }
+      int averageMinutes = totalMinutes / 7;
+      String label = start + " ~ " + end;
+      result.add(new ReadingStatisticsItemDto(
+          label,
+          formatToHHMM(averageMinutes),
+          formatToHHMM(totalMinutes)
+      ));
+    }
+    return result;
+  }
+
+  /**
+   * 월 단위 통계 - 올해 1월부터 12월까지 월별 총 독서 시간 및 평균 계산
+   */
+  private List<ReadingStatisticsItemDto> getMonthlyStatistics(Integer userId) {
+    List<ReadingStatisticsItemDto> result = new ArrayList<>();
+    YearMonth thisMonth = YearMonth.now();
+    for (int i = 1; i <= 12; i++) {
+      YearMonth ym = YearMonth.of(thisMonth.getYear(), i);
+      int totalMinutes = 0;
+      for (int d = 1; d <= ym.lengthOfMonth(); d++) {
+        LocalDate date = ym.atDay(d);
+        totalMinutes += timeRecordRepository.getTotalReadingMinutesByDate(userId, date);
+      }
+      int averageMinutes = totalMinutes / ym.lengthOfMonth();
+      result.add(new ReadingStatisticsItemDto(
+          ym.toString(),
+          formatToHHMM(averageMinutes),
+          formatToHHMM(totalMinutes)
+      ));
+    }
+    return result;
+  }
+
+  /**
+   * 분 단위 시간을 "HH:MM" 형식으로 변환
+   */
+  private String formatToHHMM(int minutes) {
+    int hour = minutes / 60;
+    int minute = minutes % 60;
+    return String.format("%02d:%02d", hour, minute);
   }
 }
