@@ -251,7 +251,7 @@ public class PlanService {
    * @return List<PlanSummaryResponseDto> 오늘 읽을 책 리스트
    */
   @Transactional(readOnly = true)
-  public List<PlanResponseDto> getTodayPlanSummaries() {
+  public List<PlanResponseDto> getReadingPlanSummaries() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     User user = userService.getCurrentUser(auth);
     LocalDate today = LocalDate.now();
@@ -265,6 +265,16 @@ public class PlanService {
       .collect(Collectors.toList());
   }
 
+  /**
+   * 오늘 날짜가 포함된 플랜 목록 조회
+   *
+   * 조건:
+   * - 로그인 사용자 기준
+   * - PlanStatus가 READING
+   * - readingDates에 오늘 날짜가 포함되어 있는 경우만
+   *
+   * @return List<PlanSummaryResponseDto> 오늘 읽을 책 리스트
+   */
   @Transactional(readOnly = true)
   public List<PlanSummaryResponseDto> getPlansForToday() {
     LocalDate today = LocalDate.now();
@@ -274,8 +284,8 @@ public class PlanService {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     User user = userService.getCurrentUser(auth);
 
-    // 2. 사용자의 모든 플랜 조회
-    List<Plan> plans = planRepository.findAllByUser(user);
+    // 2. 사용자의 READING 플랜 조회
+    List<Plan> plans = planRepository.findAllByUserAndStatus(user, PlanStatus.READING);
 
     // 3. 오늘 날짜가 포함된 플랜만 필터링
     List<Plan> todaysPlans = plans.stream()

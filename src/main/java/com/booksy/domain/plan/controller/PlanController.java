@@ -91,15 +91,20 @@ public class PlanController {
   }
 
   /**
+   * 진행중인 플랜 요약 정보 조회 API
+   *
+   * @return 진행 중인 플랜 목록
+   */
+  @GetMapping("/summary")
+  public ResponseEntity<List<PlanResponseDto>> getReadingPlans() {
+    return ResponseEntity.ok(planService.getReadingPlanSummaries());
+  }
+
+  /**
    * 오늘 읽을 책 요약 정보 조회 API
    *
    * @return 오늘 읽을 플랜 목록
    */
-  @GetMapping("/summary")
-  public ResponseEntity<List<PlanResponseDto>> getTodayPlans() {
-    return ResponseEntity.ok(planService.getTodayPlanSummaries());
-  }
-
   @GetMapping("/today")
   public ResponseEntity<List<PlanSummaryResponseDto>> getPlansForToday() {
     return ResponseEntity.ok(planService.getPlansForToday());
