@@ -96,9 +96,15 @@ public class PlanController {
    * @return 오늘 읽을 플랜 목록
    */
   @GetMapping("/summary")
-  public ResponseEntity<List<PlanSummaryResponseDto>> getTodayPlans() {
+  public ResponseEntity<List<PlanResponseDto>> getTodayPlans() {
     return ResponseEntity.ok(planService.getTodayPlanSummaries());
   }
+
+  @GetMapping("/today")
+  public ResponseEntity<List<PlanSummaryResponseDto>> getPlansForToday() {
+    return ResponseEntity.ok(planService.getPlansForToday());
+  }
+
 
   /**
    * 특정 플랜 상세 정보 조회

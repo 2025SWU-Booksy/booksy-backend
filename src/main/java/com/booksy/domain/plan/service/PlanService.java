@@ -251,7 +251,7 @@ public class PlanService {
    * @return List<PlanSummaryResponseDto> 오늘 읽을 책 리스트
    */
   @Transactional(readOnly = true)
-  public List<PlanSummaryResponseDto> getTodayPlanSummaries() {
+  public List<PlanResponseDto> getTodayPlanSummaries() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     User user = userService.getCurrentUser(auth);
     LocalDate today = LocalDate.now();
@@ -261,9 +261,33 @@ public class PlanService {
         user, PlanStatus.READING, today, today);
 
     return plans.stream()
-      .map(planMapper::toSummaryDto)
+      .map(planMapper::toResponseDto)
       .collect(Collectors.toList());
   }
+
+  @Transactional(readOnly = true)
+  public List<PlanSummaryResponseDto> getPlansForToday() {
+    LocalDate today = LocalDate.now();
+    String todayStr = today.toString();
+
+    // 1. 사용자 조회
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    User user = userService.getCurrentUser(auth);
+
+    // 2. 사용자의 모든 플랜 조회
+    List<Plan> plans = planRepository.findAllByUser(user);
+
+    // 3. 오늘 날짜가 포함된 플랜만 필터링
+    List<Plan> todaysPlans = plans.stream()
+      .filter(plan -> plan.getReadingDates().contains(todayStr))
+      .toList();
+
+    // 4. DTO로 변환 후 반환
+    return todaysPlans.stream()
+      .map(planMapper::toSummaryDto)
+      .toList();
+  }
+
 
   /**
    * 플랜 상세 정보 조회

@@ -2,6 +2,7 @@ package com.booksy.domain.plan.dto;
 
 import com.booksy.domain.plan.type.PlanStatus;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
@@ -29,4 +30,6 @@ public class PlanDetailResponseDto {
   private PlanStatus status;
   private String totalReadingTime;
   private String todayReadingTime;
+
+  private List<LocalDate> readingDates;
 }
