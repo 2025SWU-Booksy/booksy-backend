@@ -25,9 +25,14 @@ public class CustomUserDetailsService {
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
 
+    String password = user.getPassword();
+    if (password == null) {
+      password = java.util.UUID.randomUUID().toString(); // 더미 비밀번호
+    }
+
     return org.springframework.security.core.userdetails.User.builder()
         .username(user.getId().toString())
-        .password(user.getPassword())
+        .password(password)
         .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")))
         .build();
   }
