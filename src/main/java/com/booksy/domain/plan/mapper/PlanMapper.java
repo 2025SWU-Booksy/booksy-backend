@@ -3,13 +3,16 @@ package com.booksy.domain.plan.mapper;
 import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanDetailResponseDto;
+import com.booksy.domain.plan.dto.PlanListResponseDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.type.PlanStatus;
+import com.booksy.domain.readinglog.repository.ReadingLogRepository;
 import com.booksy.domain.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.List;
@@ -22,9 +25,11 @@ import org.springframework.stereotype.Component;
 public class PlanMapper {
 
   private final ObjectMapper objectMapper;
+  private final ReadingLogRepository readingLogRepository;
 
-  public PlanMapper(ObjectMapper objectMapper) {
+  public PlanMapper(ObjectMapper objectMapper, ReadingLogRepository readingLogRepository) {
     this.objectMapper = objectMapper;
+    this.readingLogRepository = readingLogRepository;
   }
 
   /**
@@ -163,6 +168,91 @@ public class PlanMapper {
       .dailyMinutes(dto.getDailyMinutes())
       .build();
   }
+
+  /**
+   * 플랜 엔티티와 상태값, 스크랩 수치를 받아 통합 응답 DTO로 변환한다.
+   *
+   * 상태값에 따라 필요한 필드를 조건적으로 포함한다:
+   * - WISHLIST, ABANDONED: 이미지, 제목, 저자, 출판사
+   * - READING: 시작/종료 날짜, 오늘 인덱스, 진행률
+   * - COMPLETED: 시작/종료 날짜, 별점, 스크랩 개수
+   *
+   * @param plan       변환할 플랜 엔티티
+   * @param status     현재 플랜 상태 (PlanStatus)
+   * @param scrapCount COMPLETED 상태에서 사용되는 스크랩 개수 (기타 상태에서는 0으로 전달)
+   * @return 상태에 맞게 구성된 PlanListResponseDto
+   */
+  public PlanListResponseDto toListDto(Plan plan, PlanStatus status, int scrapCount) {
+    PlanListResponseDto.PlanListResponseDtoBuilder builder = PlanListResponseDto.builder()
+      .planId(plan.getId())
+      .title(plan.getBook().getTitle())
+      .author(plan.getBook().getAuthor())
+      .publisher(plan.getBook().getPublisher())
+      .imageUrl(plan.getBook().getImageUrl());
+
+    if (status == PlanStatus.READING || status == PlanStatus.COMPLETED) {
+      builder.startDate(plan.getStartDate())
+        .endDate(plan.getEndDate());
+    }
+
+    if (status == PlanStatus.READING) {
+      builder.todayIndex(calculateTodayIndex(plan))
+        .progressPercent(calculateProgress(plan));
+    }
+
+    if (status == PlanStatus.COMPLETED) {
+      builder
+//        .rating(plan.getRating())
+        .scrapCount(scrapCount);
+    }
+
+    return builder.build();
+  }
+
+  /**
+   * readingDates(JSON 문자열)에서 오늘 날짜가 몇 번째인지 계산
+   */
+  private int calculateTodayIndex(Plan plan) {
+    String readingDatesJson = plan.getReadingDates();
+    if (readingDatesJson == null || readingDatesJson.isBlank()) {
+      return 0;
+    }
+
+    try {
+      List<LocalDate> dates = objectMapper.readValue(
+        readingDatesJson,
+        new TypeReference<>() {
+        }
+      );
+
+      LocalDate today = LocalDate.now();
+      for (int i = 0; i < dates.size(); i++) {
+        if (dates.get(i).equals(today)) {
+          return i + 1;
+        }
+      }
+
+    } catch (Exception e) {
+//      log.warn("readingDates 파싱 실패 - planId: {}, 원본: {}", plan.getId(), readingDatesJson, e);
+    }
+
+    return 0;
+  }
+
+  /**
+   * 전체 페이지 대비 현재 페이지를 기준으로 진행률(%) 계산
+   */
+  private int calculateProgress(Plan plan) {
+    Integer total = plan.getBook().getTotalPage();
+    Integer current = plan.getCurrentPage();
+
+    if (total == null || total <= 0 || current == null || current <= 0) {
+      return 0;
+    }
+
+    return Math.min(100, (int) ((double) current / total * 100));
+  }
+
 
   /**
    * 리스트(Object)를 JSON 문자열로 변환
