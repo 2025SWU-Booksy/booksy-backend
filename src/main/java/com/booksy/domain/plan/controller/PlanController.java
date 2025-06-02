@@ -3,6 +3,7 @@ package com.booksy.domain.plan.controller;
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanDetailResponseDto;
 import com.booksy.domain.plan.dto.PlanExtendRequestDto;
+import com.booksy.domain.plan.dto.PlanListResponseDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
@@ -83,10 +84,10 @@ public class PlanController {
    * @return 해당 상태에 해당하는 플랜 목록
    */
   @GetMapping
-  public ResponseEntity<List<PlanResponseDto>> getPlansByStatus(
+  public ResponseEntity<List<PlanListResponseDto>> getPlansByStatus(
     @RequestParam PlanStatus status
   ) {
-    List<PlanResponseDto> plans = planService.getPlansByStatus(status);
+    List<PlanListResponseDto> plans = planService.getPlansByStatus(status);
     return ResponseEntity.ok(plans);
   }
 

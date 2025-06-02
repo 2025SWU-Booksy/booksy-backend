@@ -25,21 +25,21 @@ public interface ReadingLogRepository extends JpaRepository<ReadingLog, Long> {
    * 도서별 스크랩 리스트를 조회
    */
   @Query("""
-        SELECT new com.booksy.domain.readinglog.dto.ScrapBookResponseDto(
-          p.id,
-          b.title,
-          b.author,
-          b.imageUrl,
-          COUNT(l),
-          MAX(l.createdAt)
-        )
-        FROM ReadingLog l
-        JOIN l.plan p
-        JOIN p.book b
-        WHERE l.user.id = :userId
-          AND l.contentType = 'SCRAP'
-        GROUP BY p.id, b.title, b.author, b.imageUrl
-      """)
+      SELECT new com.booksy.domain.readinglog.dto.ScrapBookResponseDto(
+        p.id,
+        b.title,
+        b.author,
+        b.imageUrl,
+        COUNT(l),
+        MAX(l.createdAt)
+      )
+      FROM ReadingLog l
+      JOIN l.plan p
+      JOIN p.book b
+      WHERE l.user.id = :userId
+        AND l.contentType = 'SCRAP'
+      GROUP BY p.id, b.title, b.author, b.imageUrl
+    """)
   List<ScrapBookResponseDto> findScrapGroupedByBook(@Param("userId") Integer userId);
 
   /**
@@ -47,5 +47,7 @@ public interface ReadingLogRepository extends JpaRepository<ReadingLog, Long> {
    */
   @Query("SELECT COUNT(r) FROM ReadingLog r WHERE r.user.id = :userId AND r.contentType = :type")
   int countByUserIdAndContentType(@Param("userId") Integer userId,
-      @Param("type") ContentType type);
+    @Param("type") ContentType type);
+
+  int countByPlanIdAndContentType(Long planId, ContentType contentType);
 }

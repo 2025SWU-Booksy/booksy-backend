@@ -4,6 +4,7 @@ import com.booksy.domain.book.entity.Book;
 import com.booksy.domain.book.service.BookService;
 import com.booksy.domain.plan.dto.PlanCreateRequestDto;
 import com.booksy.domain.plan.dto.PlanDetailResponseDto;
+import com.booksy.domain.plan.dto.PlanListResponseDto;
 import com.booksy.domain.plan.dto.PlanPreviewResponseDto;
 import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
@@ -11,6 +12,8 @@ import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.mapper.PlanMapper;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
+import com.booksy.domain.readinglog.repository.ReadingLogRepository;
+import com.booksy.domain.readinglog.type.ContentType;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.service.UserService;
 import com.booksy.global.ai.OpenAiClient;
@@ -41,6 +44,7 @@ public class PlanService {
   private final PlanMapper planMapper;
 
   private final OpenAiClient openAiClient;
+  private final ReadingLogRepository readingLogRepository;
 
   /**
    * 플랜 미리보기를 위한 계산 (DB 저장 없이 결과만 반환)
@@ -230,13 +234,19 @@ public class PlanService {
    * @return 해당 상태에 해당하는 플랜 목록
    */
   @Transactional(readOnly = true)
-  public List<PlanResponseDto> getPlansByStatus(PlanStatus status) {
+  public List<PlanListResponseDto> getPlansByStatus(PlanStatus status) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     User user = userService.getCurrentUser(authentication);
 
     List<Plan> plans = planRepository.findAllByUserAndStatus(user, status);
+
     return plans.stream()
-      .map(planMapper::toResponseDto)
+      .map(plan -> {
+        int scrapCount = (status == PlanStatus.COMPLETED)
+          ? readingLogRepository.countByPlanIdAndContentType(plan.getId(), ContentType.SCRAP)
+          : 0;
+        return planMapper.toListDto(plan, status, scrapCount);
+      })
       .collect(Collectors.toList());
   }
 
