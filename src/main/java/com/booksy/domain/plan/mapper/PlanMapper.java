@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -138,6 +139,7 @@ public class PlanMapper {
       .dailyMinutes(plan.getDailyMinutes() != null ? plan.getDailyMinutes() : 0)
       .progressRate(progressRate)
       .status(plan.getStatus())
+      .readingDates(parseReadingDates(plan.getReadingDates()))
       .build();
   }
 
@@ -268,6 +270,16 @@ public class PlanMapper {
       return objectMapper.writeValueAsString(list);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("JSON 변환 실패", e);
+    }
+  }
+
+
+  private List<String> parseReadingDates(String json) {
+    try {
+      return objectMapper.readValue(json, new TypeReference<>() {
+      });
+    } catch (JsonProcessingException e) {
+      return Collections.emptyList();
     }
   }
 
