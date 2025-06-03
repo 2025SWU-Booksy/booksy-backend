@@ -31,5 +31,5 @@ public class PlanDetailResponseDto {
   private String totalReadingTime;
   private String todayReadingTime;
 
-  private List<LocalDate> readingDates;
+  private List<String> readingDates;
 }
