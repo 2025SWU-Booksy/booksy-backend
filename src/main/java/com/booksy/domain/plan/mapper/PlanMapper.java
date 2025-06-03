@@ -9,6 +9,7 @@ import com.booksy.domain.plan.dto.PlanResponseDto;
 import com.booksy.domain.plan.dto.PlanSummaryResponseDto;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.type.PlanStatus;
+import com.booksy.domain.readinglog.dto.TimeRecordResponseDto;
 import com.booksy.domain.readinglog.repository.ReadingLogRepository;
 import com.booksy.domain.user.entity.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -116,7 +117,7 @@ public class PlanMapper {
    * @param plan Plan 엔티티
    * @return PlanDetailResponseDto (책 + 플랜 상세 정보)
    */
-  public PlanDetailResponseDto toDetailDto(Plan plan) {
+  public PlanDetailResponseDto toDetailDto(Plan plan, TimeRecordResponseDto timeDto) {
     Book book = plan.getBook();
 
     int totalPage = book.getTotalPage();
@@ -139,6 +140,8 @@ public class PlanMapper {
       .dailyMinutes(plan.getDailyMinutes() != null ? plan.getDailyMinutes() : 0)
       .progressRate(progressRate)
       .status(plan.getStatus())
+      .todayReadingTime(timeDto.getTodayDuration())
+      .totalReadingTime(timeDto.getTotalDuration())
       .readingDates(parseReadingDates(plan.getReadingDates()))
       .build();
   }

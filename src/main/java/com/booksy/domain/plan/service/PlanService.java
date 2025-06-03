@@ -12,7 +12,9 @@ import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.mapper.PlanMapper;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
+import com.booksy.domain.readinglog.dto.TimeRecordResponseDto;
 import com.booksy.domain.readinglog.repository.ReadingLogRepository;
+import com.booksy.domain.readinglog.service.TimeRecordService;
 import com.booksy.domain.readinglog.type.ContentType;
 import com.booksy.domain.user.entity.User;
 import com.booksy.domain.user.service.UserService;
@@ -45,6 +47,7 @@ public class PlanService {
 
   private final OpenAiClient openAiClient;
   private final ReadingLogRepository readingLogRepository;
+  private final TimeRecordService timeRecordService;
 
   /**
    * 플랜 미리보기를 위한 계산 (DB 저장 없이 결과만 반환)
@@ -323,7 +326,9 @@ public class PlanService {
     Plan plan = planRepository.findByIdAndUser(planId, user)
       .orElseThrow(() -> new ApiException(ErrorCode.PLAN_NOT_FOUND));
 
-    return planMapper.toDetailDto(plan);
+    TimeRecordResponseDto timeDto = timeRecordService.getTimeStat(planId);
+
+    return planMapper.toDetailDto(plan, timeDto);
   }
 
   /**
