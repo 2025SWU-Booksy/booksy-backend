@@ -11,7 +11,6 @@ import com.booksy.domain.user.entity.UserStatus;
 import com.booksy.domain.user.repository.UserRepository;
 import com.booksy.global.error.ErrorCode;
 import com.booksy.global.util.JwtTokenProvider;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
@@ -25,46 +24,43 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * 카카오 로그인 서비스 로직 클래스
- */
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class KakaoOAuthService {
 
   private final UserRepository userRepository;
   private final JwtTokenProvider jwtTokenProvider;
   private final RestTemplate restTemplate = new RestTemplate();
 
-  private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
-
   private OAuthUserInfo getUserInfoFromKakao(String accessToken) {
+    String url = "https://kapi.kakao.com/v2/user/me";
+
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + accessToken);
-
     HttpEntity<Void> entity = new HttpEntity<>(headers);
 
     ResponseEntity<Map> response = restTemplate.exchange(
-        KAKAO_USER_INFO_URL,
-        HttpMethod.GET,
-        entity,
-        Map.class
-    );
+        url, HttpMethod.GET, entity, Map.class);
 
-    Map body = response.getBody();
-    if (body == null) {
-      throw new IllegalArgumentException("카카오 응답이 비어있음");
+    Map<String, Object> responseBody = response.getBody();
+    if (responseBody == null || responseBody.get("id") == null) {
+      throw new IllegalArgumentException("카카오 사용자 정보가 비어있습니다.");
     }
 
-    Map<String, Object> kakaoAccount = (Map<String, Object>) body.get("kakao_account");
-    String email = (String) kakaoAccount.get("email"); // nullable 허용됨
-    String id = String.valueOf(body.get("id"));
+    String providerUserId = String.valueOf(responseBody.get("id"));
+    // 이메일은 제공되지 않을 수 있으므로 null 처리
+    String email = null;
+
+    Map<String, Object> kakaoAccount = (Map<String, Object>) responseBody.get("kakao_account");
+    if (kakaoAccount != null && kakaoAccount.get("email") instanceof String) {
+      email = (String) kakaoAccount.get("email");
+    }
 
     return OAuthUserInfo.builder()
-        .email(email)
-        .providerUserId(id)
         .provider(Provider.KAKAO)
+        .providerUserId(providerUserId)
+        .email(email)
         .build();
   }
 
@@ -88,28 +84,17 @@ public class KakaoOAuthService {
       String token = jwtTokenProvider.generateToken(user.getId());
 
       if (user.getStatus() == UserStatus.INACTIVE) {
-        LocalDateTime deletionDate = user.getUpdatedAt().plusDays(7);
-        String message = deletionDate.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"))
-            + "에 계정이 삭제됩니다. 복구하시겠습니까?";
-
-        return new LoginResponse(
-            ErrorCode.HANDLE_ACCESS_DENIED.getStatus(),
-            "INACTIVE",
-            message,
-            token
-        );
+        String message = user.getUpdatedAt()
+            .plusDays(7)
+            .format(DateTimeFormatter.ofPattern("yyyy.MM.dd")) + "에 계정이 삭제됩니다. 복구하시겠습니까?";
+        return new LoginResponse(ErrorCode.HANDLE_ACCESS_DENIED.getStatus(), "INACTIVE", message,
+            token);
       }
 
       return new LoginResponse(200, "SUCCESS", "로그인 되었습니다.", token);
-
     } catch (Exception e) {
       log.error("카카오 로그인 실패", e);
-      return new LoginResponse(
-          ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
-          "ERROR",
-          "로그인 중 오류 발생: " + e.getMessage(),
-          null
-      );
+      return new LoginResponse(500, "ERROR", "로그인 중 오류 발생: " + e.getMessage(), null);
     }
   }
 
@@ -120,19 +105,18 @@ public class KakaoOAuthService {
 
       if (userRepository.findByProviderAndProviderUserId(
           info.getProvider(), info.getProviderUserId()).isPresent()) {
-        return new SignupResponse(
-            ErrorCode.DUPLICATE_RESOURCE.getStatus(),
-            "FAIL",
-            "이미 가입된 사용자입니다. 로그인해주세요."
-        );
+        return new SignupResponse(409, "FAIL", "이미 가입된 사용자입니다. 로그인해주세요.");
       }
 
-      String nickname = request.getNickname() != null
-          ? request.getNickname()
-          : (info.getEmail() != null ? info.getEmail().split("@")[0] : "카카오회원");
+      // 닉네임 없으면 자동 생성
+      String nickname = request.getNickname();
+      if (nickname == null || nickname.isBlank()) {
+        int rand = (int) (Math.random() * 10000);
+        nickname = "닉네임" + String.format("%04d", rand);
+      }
 
       User user = User.builder()
-          .email(info.getEmail())
+          .email(null) // 이메일은 null 허용
           .provider(Provider.KAKAO)
           .providerUserId(info.getProviderUserId())
           .nickname(nickname)
@@ -146,14 +130,9 @@ public class KakaoOAuthService {
       userRepository.save(user);
 
       return new SignupResponse(201, "SUCCESS", "회원가입이 완료되었습니다.");
-
     } catch (Exception e) {
       log.error("카카오 회원가입 실패", e);
-      return new SignupResponse(
-          ErrorCode.INTERNAL_SERVER_ERROR.getStatus(),
-          "ERROR",
-          "회원가입 중 오류 발생: " + e.getMessage()
-      );
+      return new SignupResponse(500, "ERROR", "회원가입 중 오류 발생: " + e.getMessage());
     }
   }
 }
