@@ -24,6 +24,7 @@ import com.booksy.global.error.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -417,6 +418,28 @@ public class PlanService {
       throw new ApiException(ErrorCode.INVALID_PLAN_EXTENSION);
     }
 
+    LocalDate originalEndDate = plan.getEndDate();
+
+    if (newEndDate.isBefore(originalEndDate)) {
+      throw new ApiException(ErrorCode.INVALID_PLAN_EXTENSION); // 축소 금지
+    }
+
+    // 1. 기존 readingDates 파싱
+    List<String> readingDates = planMapper.parseReadingDates(plan.getReadingDates());
+
+    // 2. 기존 날짜 리스트의 마지막 날짜를 LocalDate로 가져오기
+    LocalDate lastDate = LocalDate.parse(readingDates.get(readingDates.size() - 1));
+
+    // 3. 추가할 날짜 계산 및 append
+    long daysToAdd = ChronoUnit.DAYS.between(originalEndDate.plusDays(1), newEndDate.plusDays(1));
+    for (int i = 0; i < daysToAdd; i++) {
+      LocalDate newDate = originalEndDate.plusDays(1 + i);
+      readingDates.add(newDate.toString());
+    }
+
+    // 4. JSON 문자열로 변환해서 저장
+    String updatedReadingDates = planMapper.convertListToJson(readingDates);
+    plan.setReadingDates(updatedReadingDates);
     plan.setEndDate(newEndDate);
   }
 

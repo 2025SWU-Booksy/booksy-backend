@@ -265,7 +265,7 @@ public class PlanMapper {
    * @param list 변환할 리스트
    * @return JSON 문자열
    */
-  private String convertListToJson(Object list) {
+  public String convertListToJson(Object list) {
     if (list == null) {
       return null;
     }
@@ -277,7 +277,7 @@ public class PlanMapper {
   }
 
 
-  private List<String> parseReadingDates(String json) {
+  public List<String> parseReadingDates(String json) {
     try {
       return objectMapper.readValue(json, new TypeReference<>() {
       });
