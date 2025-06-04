@@ -77,13 +77,13 @@ public class OpenAiClient {
   public String askRecommendation(int age, String gender) {
     String prompt = String.format(
       """
-        %d세 %s에게 인기 있는 실제 도서 5권을 추천해줘.
-                
+        %d세 %s(한국 거주자)에게 인기 있는 **한국 도서** 5권을 추천해줘.
+            
         조건:
-        - 반드시 존재하는 책만 추천해줘
-        - 각 책은 제목(title), 저자(author), ISBN-13(isbn)을 포함해줘
+        - 반드시 실제로 출간된 한국 도서만 추천해줘 (즉, 한국 작가의 한국어로 쓰인 책)
+        - 각 책은 제목(title), 저자(author)를 포함해줘
         - 응답은 다음 형식의 JSON 배열로 해줘:
-          [{"title": "...", "author": "...", "isbn": "..."}, ...]
+          [{"title": "...", "author": "..."}, ...]
         """,
       age,
       gender.equalsIgnoreCase("F") ? "여성" : "남성"
