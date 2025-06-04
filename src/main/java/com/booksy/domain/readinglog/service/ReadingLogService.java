@@ -16,6 +16,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -154,21 +156,19 @@ public class ReadingLogService {
    * @return 스크랩 응답 DTO 리스트
    */
   @Transactional(readOnly = true)
-  public List<ScrapResponseDto> getAllScraps(Authentication auth) {
+  public Slice<ScrapResponseDto> getAllScraps(Authentication auth, Pageable pageable) {
     User currentUser = userService.getCurrentUser(auth);
 
-    List<ReadingLog> logs = readingLogRepository
-        .findAllByUserIdAndContentType(currentUser.getId(), ContentType.SCRAP);
+    Slice<ReadingLog> logs = readingLogRepository.findAllByUserIdAndContentType(
+        currentUser.getId(), ContentType.SCRAP, pageable);
 
-    return logs.stream()
-        .map(log -> ScrapResponseDto.builder()
-            .id(log.getId())
-            .content(log.getContent())
-            .bookTitle(log.getPlan().getBook().getTitle())
-            .author(log.getPlan().getBook().getAuthor())
-            .readingDate(log.getCreatedAt())
-            .build())
-        .toList();
+    return logs.map(log -> ScrapResponseDto.builder()
+        .id(log.getId())
+        .content(log.getContent())
+        .bookTitle(log.getPlan().getBook().getTitle())
+        .author(log.getPlan().getBook().getAuthor())
+        .readingDate(log.getCreatedAt())
+        .build());
   }
 
   /**

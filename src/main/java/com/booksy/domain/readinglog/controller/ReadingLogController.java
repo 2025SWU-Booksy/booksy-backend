@@ -7,6 +7,10 @@ import com.booksy.domain.user.service.UserService;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -74,8 +78,11 @@ public class ReadingLogController {
    * @return ScrapResponseDto 리스트 (id, content, 책 제목, 작가, 생성일)
    */
   @GetMapping("/scraps")
-  public ResponseEntity<List<ScrapResponseDto>> getAllScraps(Authentication authentication) {
-    List<ScrapResponseDto> response = readingLogService.getAllScraps(authentication);
+  public ResponseEntity<Slice<ScrapResponseDto>> getAllScraps(
+      Authentication authentication,
+      @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+
+    Slice<ScrapResponseDto> response = readingLogService.getAllScraps(authentication, pageable);
     return ResponseEntity.ok(response);
   }
 
