@@ -24,8 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * 알라딘 외부 API와 통신하여 도서 정보를 가져오는 클라이언트
- * 도서 DB 제공 : 알라딘 인터넷서점( www.aladin.co.kr)
+ * 알라딘 외부 API와 통신하여 도서 정보를 가져오는 클라이언트 도서 DB 제공 : 알라딘 인터넷서점( www.aladin.co.kr)
  */
 @Component
 @RequiredArgsConstructor
@@ -41,12 +40,13 @@ public class BookExternalClient {
   /**
    * 알라딘 API에 키워드 검색 요청을 보내 도서 리스트를 가져온다.
    *
-   * @param keyword    검색 키워드
-   * @param maxResults 최대 검색 결과 수
+   * @param keyword 검색 키워드
+   * @param limit   최대 검색 결과 수
    * @return BookResponseDto 리스트 (정제된 형태)
    */
-  public List<BookResponseDto> searchBooksByKeyword(String keyword, int maxResults, String sort)
-    throws ApiException {
+  public List<BookResponseDto> searchBooksByKeyword(String keyword, int start, int limit,
+      String sort)
+      throws ApiException {
     String sortOption = AladinSortType.fromInput(sort);
 
     HttpHeaders headers = new HttpHeaders();
@@ -55,24 +55,24 @@ public class BookExternalClient {
     HttpEntity<Void> entity = new HttpEntity<>(headers);
 
     URI uri = UriComponentsBuilder.fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemSearch.aspx")
-      .queryParam("ttbkey", apiKey)
-      .queryParam("Query", keyword)
-      .queryParam("QueryType", "Keyword")
-      .queryParam("SearchTarget", "Book")
-      .queryParam("MaxResults", maxResults)
-      .queryParam("start", 1)
-      .queryParam("Sort", sortOption)
-      .queryParam("output", "js")
-      .queryParam("Version", "20131101")
-      .build()
-      .encode()
-      .toUri();
+        .queryParam("ttbkey", apiKey)
+        .queryParam("Query", keyword)
+        .queryParam("QueryType", "Keyword")
+        .queryParam("SearchTarget", "Book")
+        .queryParam("MaxResults", limit)
+        .queryParam("start", start)
+        .queryParam("Sort", sortOption)
+        .queryParam("output", "js")
+        .queryParam("Version", "20131101")
+        .build()
+        .encode()
+        .toUri();
 
     ResponseEntity<AladinItemResultDto> responseEntity = restTemplate.exchange(
-      uri,
-      HttpMethod.GET,
-      entity,
-      AladinItemResultDto.class
+        uri,
+        HttpMethod.GET,
+        entity,
+        AladinItemResultDto.class
     );
 
     AladinItemResultDto response = responseEntity.getBody();
@@ -89,20 +89,20 @@ public class BookExternalClient {
    *
    * @param isbn 조회할 도서의 ISBN
    * @return BookResponseDto (정제된 도서 정보)
-   * @exception ApiException 알라딘 API로부터 응답이 없거나 결과가 비어있을 경우
+   * @throws ApiException 알라딘 API로부터 응답이 없거나 결과가 비어있을 경우
    */
   public BookResponseDto getBookByIsbnFromAladin(String isbn) {
     String url = UriComponentsBuilder.fromHttpUrl(
-        "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
-      .queryParam("ttbkey", apiKey)
-      .queryParam("itemIdType", "ISBN13")
-      .queryParam("ItemId", isbn)
-      .queryParam("output", "js")
-      .queryParam("Version", "20131101")
-      .toUriString();
+            "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
+        .queryParam("ttbkey", apiKey)
+        .queryParam("itemIdType", "ISBN13")
+        .queryParam("ItemId", isbn)
+        .queryParam("output", "js")
+        .queryParam("Version", "20131101")
+        .toUriString();
 
     AladinItemResultDto response = restTemplate.getForObject(url,
-      AladinItemResultDto.class);
+        AladinItemResultDto.class);
 
     if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
       throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
@@ -117,55 +117,58 @@ public class BookExternalClient {
    * @param isbn   조회할 도서의 ISBN
    * @param userId 로그인한 유저
    * @return BookResponseDto (정제된 도서 정보)
-   * @exception ApiException 알라딘 API로부터 응답이 없거나 결과가 비어있을 경우
+   * @throws ApiException 알라딘 API로부터 응답이 없거나 결과가 비어있을 경우
    */
   public BookResponseDto getBookByIsbnFromAladin(String isbn, Integer userId) {
     String url = UriComponentsBuilder.fromHttpUrl(
-        "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
-      .queryParam("ttbkey", apiKey)
-      .queryParam("itemIdType", "ISBN13")
-      .queryParam("ItemId", isbn)
-      .queryParam("output", "js")
-      .queryParam("Version", "20131101")
-      .toUriString();
+            "https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx")
+        .queryParam("ttbkey", apiKey)
+        .queryParam("itemIdType", "ISBN13")
+        .queryParam("ItemId", isbn)
+        .queryParam("output", "js")
+        .queryParam("Version", "20131101")
+        .toUriString();
 
     AladinItemResultDto response = restTemplate.getForObject(url,
-      AladinItemResultDto.class);
+        AladinItemResultDto.class);
 
     if (response == null || response.getItem() == null || response.getItem().isEmpty()) {
       throw new ApiException(ErrorCode.BOOK_NOT_FOUND_EXTERNAL);
     }
 
     boolean isWishlisted = planRepository.existsByUserIdAndBookIsbnAndStatus(userId, isbn,
-      PlanStatus.WISHLIST);
+        PlanStatus.WISHLIST);
 
     return bookMapper.toDto(response.getItem().get(0), isWishlisted);
   }
 
   /**
-   * 알라딘 API를 호출하여 카테고리 ID 및 정렬 기준에 따라 도서 목록을 조회한다.
-   * 정렬 기준에 따라 내부적으로 적절한 QueryType을 자동 지정한다.
+   * 알라딘 API를 호출하여 카테고리 ID 및 정렬 기준에 따라 도서 목록을 조회한다. 정렬 기준에 따라 내부적으로 적절한 QueryType을 자동 지정한다.
    *
    * @param categoryId 알라딘 카테고리 ID (예: "336"은 자기계발)
-   * @param maxResults 최대 결과 개수 (예: 10, 20)
+   * @param start      검색 시작 위치
+   * @param limit      최대 결과 개수
    * @param sort       정렬 기준 (popular, recent, editor, blog 중 하나)
    * @return BookResponseDto 리스트 (조회된 도서 목록)
-   * @exception ApiException 정렬 값이 잘못된 경우 또는 내부 처리 중 예외 발생 시
+   * @throws ApiException 정렬 값이 잘못된 경우 또는 내부 처리 중 예외 발생 시
    */
-  @Cacheable(value = "bookList", key = "#categoryId + '_' + #sort")
-  public List<BookResponseDto> searchBooksByCategory(String categoryId, int maxResults,
-    String sort) throws ApiException {
+  @Cacheable(value = "bookList", key = "#categoryId + '_' + #sort + '_' + #start + '_' + #limit")
+  public List<BookResponseDto> searchBooksByCategory(String categoryId, int start, int limit,
+      String sort)
+      throws ApiException {
     String queryType = AladinListType.fromSortInput(sort);
 
     String url = UriComponentsBuilder.fromHttpUrl("https://www.aladin.co.kr/ttb/api/ItemList.aspx")
-      .queryParam("ttbkey", apiKey)
-      .queryParam("QueryType", queryType)
-      .queryParam("CategoryId", categoryId)
-      .queryParam("MaxResults", maxResults)
-      .queryParam("output", "js")
-      .queryParam("Version", "20131101")
-      .queryParam("SearchTarget", "Book")
-      .toUriString();
+        .queryParam("ttbkey", apiKey)
+        .queryParam("QueryType", queryType)
+        .queryParam("CategoryId", categoryId)
+        .queryParam("MaxResults", limit)
+        .queryParam("start", start)
+        .queryParam("Sort", sort)
+        .queryParam("output", "js")
+        .queryParam("Version", "20131101")
+        .queryParam("SearchTarget", "Book")
+        .toUriString();
 
     AladinItemResultDto response = restTemplate.getForObject(url, AladinItemResultDto.class);
 
@@ -176,3 +179,4 @@ public class BookExternalClient {
     return bookMapper.toDtoListFromAladin(response.getItem());
   }
 }
+

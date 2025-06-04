@@ -7,11 +7,7 @@ import com.booksy.domain.book.service.BookService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,17 +32,19 @@ public class BookController {
    * 키워드 기반으로 알라딘 API를 통해 도서 목록을 검색하는 API
    *
    * @param keyword 검색 키워드
-   * @param limit   결과 개수 제한 (기본값 10)
-   * @param sort    검색 정렬 (기본값 정확도순)
+   * @param limit   페이지당 결과 개수 (기본값 10)
+   * @param sort    정렬 기준 (기본값: accuracy)
+   * @param page    페이지 번호 (기본값 0, 0부터 시작)
    * @return 검색된 도서 목록
    */
   @GetMapping("/search")
   public ResponseEntity<List<BookResponseDto>> searchBooks(
-    @RequestParam String keyword,
-    @RequestParam(defaultValue = "10") int limit,
-    @RequestParam(defaultValue = "accuracy") String sort
+      @RequestParam String keyword,
+      @RequestParam(defaultValue = "10") int limit,
+      @RequestParam(defaultValue = "accuracy") String sort,
+      @RequestParam(defaultValue = "0") int page
   ) {
-    List<BookResponseDto> result = bookService.searchBooksByKeyword(keyword, limit, sort);
+    List<BookResponseDto> result = bookService.searchBooksByKeyword(keyword, limit, sort, page);
     return ResponseEntity.ok(result);
   }
 
@@ -72,11 +70,12 @@ public class BookController {
    */
   @GetMapping("/category")
   public List<BookResponseDto> getBooksByCategory(
-    @RequestParam String categoryId,
-    @RequestParam(defaultValue = "10") int limit,
-    @RequestParam(defaultValue = "popular") String sort
+      @RequestParam String categoryId,
+      @RequestParam(defaultValue = "10") int limit,
+      @RequestParam(defaultValue = "popular") String sort,
+      @RequestParam(defaultValue = "0") int page
   ) {
-    return bookService.getBooksByCategory(categoryId, limit, sort);
+    return bookService.getBooksByCategory(categoryId, limit, sort, page);
   }
 
   /**
@@ -90,13 +89,13 @@ public class BookController {
    */
   @GetMapping("/{isbn}/libraries/nearby")
   public ResponseEntity<List<LibraryLocationResponseDto>> getNearbyLibrariesWithBook(
-    @PathVariable String isbn,
-    @RequestParam double lat,
-    @RequestParam double lng,
-    @RequestParam(defaultValue = "2.0") double radius
+      @PathVariable String isbn,
+      @RequestParam double lat,
+      @RequestParam double lng,
+      @RequestParam(defaultValue = "2.0") double radius
   ) {
     List<LibraryLocationResponseDto> response = bookService.getNearbyLibrariesWithBook(isbn, lat,
-      lng, radius);
+        lng, radius);
     return ResponseEntity.ok(response);
   }
 
@@ -109,8 +108,8 @@ public class BookController {
    */
   @GetMapping("/{isbn}/libraries/{libCode}/availability")
   public ResponseEntity<BookAvailability> getBookAvailability(
-    @PathVariable String isbn,
-    @PathVariable String libCode
+      @PathVariable String isbn,
+      @PathVariable String libCode
   ) {
     BookAvailability result = bookService.getBookAvailability(isbn, libCode);
     return ResponseEntity.ok(result);
