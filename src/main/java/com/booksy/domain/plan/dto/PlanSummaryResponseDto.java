@@ -21,4 +21,7 @@ public class PlanSummaryResponseDto {
   private int totalPage;
   private int progressRate; // 0~100 정수
   private String totalReadingTime; // 나중에 추가
+
+  private int dailyPages;
+  private int dailyMinutes;
 }

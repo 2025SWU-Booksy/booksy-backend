@@ -108,6 +108,8 @@ public class PlanMapper {
       .totalPage(total)
       .progressRate(progress)
       .totalReadingTime(null)
+      .dailyPages(plan.getDailyPages())
+      .dailyMinutes(plan.getDailyMinutes())
       .build();
   }
 
