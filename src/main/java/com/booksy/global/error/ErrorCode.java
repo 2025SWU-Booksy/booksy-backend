@@ -41,11 +41,15 @@ public enum ErrorCode {
 
   // RANKING
   INVALID_SCOPE_TYPE(400, "R001", "Invalid scope type", LogLevel.WARN),
-  
+
   // PLAN
   PLAN_NOT_FOUND(404, "P001", "Plan not found", LogLevel.WARN),
   INVALID_PLAN_STATUS(400, "P002", "Invalid plan status", LogLevel.WARN),
   INVALID_PLAN_EXTENSION(400, "P003", "Cannot extend free plan", LogLevel.WARN),
+  ILLEGAL_PAGE_REWIND(400, "P004", "Current page cannot be less than the previously read page.",
+      LogLevel.WARN),
+  ILLEGAL_PAGE_OVERFLOW(400, "P005",
+      "Current page cannot exceed the total number of pages in the book.", LogLevel.WARN),
 
   // CATEGORY
   CATEGORY_SAVE_FAILED(500, "CA001", "Failed to save category", LogLevel.ERROR),

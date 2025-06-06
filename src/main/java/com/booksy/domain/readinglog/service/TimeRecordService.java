@@ -4,12 +4,7 @@ import com.booksy.domain.badge.service.BadgeService;
 import com.booksy.domain.plan.entity.Plan;
 import com.booksy.domain.plan.repository.PlanRepository;
 import com.booksy.domain.plan.type.PlanStatus;
-import com.booksy.domain.readinglog.dto.TimeRecordDetailResponseDto;
-import com.booksy.domain.readinglog.dto.TimeRecordResponseDto;
-import com.booksy.domain.readinglog.dto.TimeRecordStartRequestDto;
-import com.booksy.domain.readinglog.dto.TimeRecordStartResponseDto;
-import com.booksy.domain.readinglog.dto.TimeRecordStopRequestDto;
-import com.booksy.domain.readinglog.dto.TimeRecordStopResponseDto;
+import com.booksy.domain.readinglog.dto.*;
 import com.booksy.domain.readinglog.entity.TimeRecord;
 import com.booksy.domain.readinglog.repository.TimeRecordRepository;
 import com.booksy.domain.user.entity.User;
@@ -38,13 +33,13 @@ public class TimeRecordService {
    * 타이머 시작 처리
    */
   public TimeRecordStartResponseDto startTimer(TimeRecordStartRequestDto requestDto,
-    Authentication authentication) {
+      Authentication authentication) {
     // 현재 로그인한 사용자 조회
     User user = userService.getCurrentUser(authentication);
 
     // 요청한 플랜 존재 여부 확인
     Plan plan = planRepository.findById(requestDto.getPlanId())
-      .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
 
     // 현재 로그인한 사용자의 플랜인지 확인
     if (!plan.getUser().getId().equals(user.getId())) {
@@ -58,18 +53,18 @@ public class TimeRecordService {
 
     // 이미 시작된 타이머가 존재하는지 확인
     timeRecordRepository.findFirstByUserIdAndEndTimeIsNullOrderByStartTimeDesc(user.getId())
-      .ifPresent(record -> {
-        throw new ApiException(ErrorCode.ILLEGAL_STATE); // 중복 시작 방지
-      });
+        .ifPresent(record -> {
+          throw new ApiException(ErrorCode.ILLEGAL_STATE); // 중복 시작 방지
+        });
 
     // 타이머 기록 저장
     TimeRecord timeRecord = TimeRecord.builder()
-      .user(user)
-      .plan(plan)
-      .startTime(LocalDateTime.now())
-      .endTime(null)
-      .duration(0)
-      .build();
+        .user(user)
+        .plan(plan)
+        .startTime(LocalDateTime.now())
+        .endTime(null)
+        .duration(0)
+        .build();
 
     timeRecordRepository.save(timeRecord);
 
@@ -80,13 +75,13 @@ public class TimeRecordService {
    * 타이머 종료 처리
    */
   public TimeRecordStopResponseDto stopTimer(TimeRecordStopRequestDto requestDto,
-    Authentication authentication) {
+      Authentication authentication) {
     User user = userService.getCurrentUser(authentication);
 
     // 진행 중인 타이머 찾기
     TimeRecord timeRecord = timeRecordRepository
-      .findFirstByUserIdAndEndTimeIsNullOrderByStartTimeDesc(user.getId())
-      .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+        .findFirstByUserIdAndEndTimeIsNullOrderByStartTimeDesc(user.getId())
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
 
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime startTime = timeRecord.getStartTime();
@@ -98,12 +93,12 @@ public class TimeRecordService {
 
     // 현재 페이지가 이전까지 읽은 페이지보다 감소했는지 검사
     if (currentPage < plan.getCurrentPage()) {
-      throw new ApiException(ErrorCode.ILLEGAL_STATE);
+      throw new ApiException(ErrorCode.ILLEGAL_PAGE_REWIND);
     }
 
     // 현재 페이지가 책의 전체 페이지를 초과하는지 검사
     if (currentPage > totalPage) {
-      throw new ApiException(ErrorCode.ILLEGAL_STATE);
+      throw new ApiException(ErrorCode.ILLEGAL_PAGE_OVERFLOW);
     }
 
     // 완독한 경우 → 플랜 and 카테고리 뱃지 평가
@@ -128,10 +123,10 @@ public class TimeRecordService {
 
     // 응답 DTO 반환
     return new TimeRecordStopResponseDto(
-      startTime,
-      now,
-      (int) minutes,
-      plan.getCurrentPage()
+        startTime,
+        now,
+        (int) minutes,
+        plan.getCurrentPage()
     );
   }
 
@@ -143,7 +138,7 @@ public class TimeRecordService {
 
     // 플랜 소유 여부 확인
     Plan plan = planRepository.findById(planId)
-      .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
     if (!plan.getUser().getId().equals(user.getId())) {
       throw new ApiException(ErrorCode.UNAUTHORIZED_ACCESS);
     }
@@ -184,9 +179,9 @@ public class TimeRecordService {
    */
   private int calculateTotalSeconds(List<TimeRecord> records) {
     return records.stream()
-      .filter(r -> r.getStartTime() != null && r.getEndTime() != null)
-      .mapToInt(r -> (int) Duration.between(r.getStartTime(), r.getEndTime()).getSeconds())
-      .sum();
+        .filter(r -> r.getStartTime() != null && r.getEndTime() != null)
+        .mapToInt(r -> (int) Duration.between(r.getStartTime(), r.getEndTime()).getSeconds())
+        .sum();
   }
 
   /**
@@ -204,12 +199,12 @@ public class TimeRecordService {
    * 특정 날짜에 해당하는 타이머 기록들을 조회하고 시간 범위 및 duration(분)을 가공하여 리스트로 반환
    */
   public TimeRecordDetailResponseDto getTimerDetails(Long planId, LocalDate date,
-    Authentication authentication) {
+      Authentication authentication) {
     User user = userService.getCurrentUser(authentication);
 
     // 플랜 소유 확인
     Plan plan = planRepository.findById(planId)
-      .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
+        .orElseThrow(() -> new ApiException(ErrorCode.ENTITY_NOT_FOUND));
     if (!plan.getUser().getId().equals(user.getId())) {
       throw new ApiException(ErrorCode.UNAUTHORIZED_ACCESS);
     }
@@ -219,17 +214,17 @@ public class TimeRecordService {
     DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     List<TimeRecordDetailResponseDto.TimeRecordItemDto> items = records.stream()
-      .filter(r -> r.getStartTime() != null && r.getEndTime() != null)
-      .map(r -> new TimeRecordDetailResponseDto.TimeRecordItemDto(
-        r.getStartTime().format(timeFormatter),
-        r.getEndTime().format(timeFormatter),
-        r.getDuration()
-      ))
-      .toList();
+        .filter(r -> r.getStartTime() != null && r.getEndTime() != null)
+        .map(r -> new TimeRecordDetailResponseDto.TimeRecordItemDto(
+            r.getStartTime().format(timeFormatter),
+            r.getEndTime().format(timeFormatter),
+            r.getDuration()
+        ))
+        .toList();
 
     int totalDuration = items.stream()
-      .mapToInt(TimeRecordDetailResponseDto.TimeRecordItemDto::getDuration)
-      .sum();
+        .mapToInt(TimeRecordDetailResponseDto.TimeRecordItemDto::getDuration)
+        .sum();
 
     return new TimeRecordDetailResponseDto(items, totalDuration);
   }
