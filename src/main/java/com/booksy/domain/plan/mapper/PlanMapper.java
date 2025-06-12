@@ -50,7 +50,8 @@ public class PlanMapper {
     int totalDays,
     List<LocalDate> readingDates,
     boolean tooLong,
-    int recommendedPeriodDays) {
+    Integer recommendedPeriodDays,
+    boolean isFreePlan) {
     return PlanPreviewResponseDto.builder()
       .bookIsbn(book.getIsbn())
       .title(book.getTitle())
@@ -59,6 +60,7 @@ public class PlanMapper {
       .publishedDate(book.getPublishedDate())
       .totalPage(book.getTotalPage())
       .imageUrl(book.getImageUrl())
+      .isFreePlan(isFreePlan)
       .dailyPages(dailyPages)
       .dailyMinutes(dailyMinutes)
       .totalDurationDays(totalDays)

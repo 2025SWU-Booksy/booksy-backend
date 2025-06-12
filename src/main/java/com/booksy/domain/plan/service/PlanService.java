@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -61,15 +62,7 @@ public class PlanService {
     // 1. 도서 조회 or 저장
     Book book = bookService.findOrCreateBookByIsbn(requestDto.getBookIsbn());
 
-    // 2. 읽을 날짜 계산
-    List<LocalDate> readingDates = calculateReadingDates(
-      requestDto.getStartDate(),
-      requestDto.getPeriodDays(),
-      requestDto.getExcludeDates(),
-      requestDto.getExcludeWeekdays()
-    );
-
-    // 3. 난이도 판단 (기본값: 초급)
+    // 2. 난이도 판단 (기본값: 초급)
     String level = "초급";
 
     if (book.getDescription() != null && !book.getDescription().isBlank()) {
@@ -88,26 +81,55 @@ public class PlanService {
       }
     }
 
-    // 난이도에 따른 읽기 속도 설정
+    // 3. 난이도에 따른 읽기 속도 및 분량 설정
     int speed = switch (level) {
-      case "초급" -> 2; // 1p = 2분
+      case "초급" -> 2;
       case "중급" -> 3;
       case "고급" -> 4;
       default -> 2;
     };
 
-    int dailyPages = book.getTotalPage() / readingDates.size();
-    int dailyMinutes = dailyPages * speed;
-    int totalDays = readingDates.size();
+    int dailyPages;
+    int dailyMinutes;
+    int totalDays;
+    boolean tooLong;
+    Integer recommendedDays;
+    List<LocalDate> readingDates;
 
-    // 하루 권장 시간이 90분을 초과하는 경우 기간 재설정 유도
-    boolean tooLong = dailyMinutes > 90;
-    int recommendedDays = tooLong
-      ? (int) Math.ceil((double) (book.getTotalPage() * speed) / 90)
-      : totalDays;
+    if (Boolean.TRUE.equals(requestDto.getIsFreePlan())) {
+      // 자유 플랜일 경우: 난이도 기반 하루 분량만 계산
+      dailyPages = switch (level) {
+        case "초급" -> 15;
+        case "중급" -> 10;
+        case "고급" -> 7;
+        default -> 10;
+      };
+
+      dailyMinutes = dailyPages * speed;
+      totalDays = 0;
+      tooLong = dailyMinutes > 90;
+      recommendedDays = null;
+      readingDates = Collections.emptyList();
+    } else {
+      // 날짜 기반 플랜
+      readingDates = calculateReadingDates(
+        requestDto.getStartDate(),
+        requestDto.getPeriodDays(),
+        requestDto.getExcludeDates(),
+        requestDto.getExcludeWeekdays()
+      );
+
+      totalDays = readingDates.size();
+      dailyPages = book.getTotalPage() / Math.max(totalDays, 1);
+      dailyMinutes = dailyPages * speed;
+      tooLong = dailyMinutes > 90;
+      recommendedDays = tooLong
+        ? (int) Math.ceil((double) (book.getTotalPage() * speed) / 90)
+        : totalDays;
+    }
 
     return planMapper.toPreviewDto(book, dailyPages, dailyMinutes, totalDays, readingDates,
-      tooLong, recommendedDays);
+      tooLong, recommendedDays, requestDto.getIsFreePlan());
   }
 
   /**
@@ -154,19 +176,33 @@ public class PlanService {
     // 2. 도서 조회
     Book book = bookService.findOrCreateBookByIsbn(dto.getBookIsbn());
 
-    // 3. 독서 날짜 계산
-    List<LocalDate> readingDates;
+    List<LocalDate> readingDates = new ArrayList<>();
 
-    if (Boolean.TRUE.equals(dto.getUseRecommendedPlan())) {
-      // 추천 일정 사용 시, recommendedPeriodDays로 새로 계산
+    // 3. 자유 플랜: readingDates 없이 dailyPages만 설정
+    if (Boolean.TRUE.equals(dto.getIsFreePlan())) {
+      String level = book.getDifficultyLevel() != null ? book.getDifficultyLevel() : "중급";
+      int dailyPages = switch (level) {
+        case "초급" -> 15;
+        case "중급" -> 10;
+        case "고급" -> 7;
+        default -> 10;
+      };
+
+      dto.setDailyPages(dailyPages);
+      dto.setReadingDates(Collections.emptyList());
+    }
+
+    // 4. 추천 일정 사용 시 날짜 계산
+    else if (Boolean.TRUE.equals(dto.getUseRecommendedPlan())) {
       readingDates = calculateReadingDates(
         dto.getStartDate(),
         dto.getRecommendedPeriodDays(),
         dto.getExcludeDates(),
         dto.getExcludeWeekdays()
       );
-    } else {
-      // preview에서 받은 readingDates 그대로 사용
+    }
+    // 5. 사용자가 입력한 readingDates 사용
+    else {
       readingDates = dto.getReadingDates();
     }
 

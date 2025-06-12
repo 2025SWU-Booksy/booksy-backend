@@ -30,5 +30,5 @@ public class PlanPreviewResponseDto {
 
   // 기간이 적절하지 않은 경우 플랜 기간 수정 유도
   private boolean tooLong;
-  private int recommendedPeriodDays;
+  private Integer recommendedPeriodDays;
 }
