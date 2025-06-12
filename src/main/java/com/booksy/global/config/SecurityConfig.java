@@ -32,19 +32,20 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .formLogin(login -> login.disable())
-        .httpBasic(basic -> basic.disable())
-        .sessionManagement(session ->
-            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/login", "/api/signup", "/api/oauth/**", "/oauth/callback/**")
-            .permitAll()
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
-            UsernamePasswordAuthenticationFilter.class);
+      .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+      .csrf(csrf -> csrf.disable())
+      .formLogin(login -> login.disable())
+      .httpBasic(basic -> basic.disable())
+      .sessionManagement(session ->
+        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/api/login", "/api/signup", "/api/oauth/**", "/oauth/callback/**",
+          "/api/categories/**")
+        .permitAll()
+        .anyRequest().authenticated()
+      )
+      .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
+        UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
