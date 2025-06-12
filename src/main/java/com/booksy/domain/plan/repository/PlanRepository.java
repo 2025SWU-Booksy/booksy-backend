@@ -72,6 +72,16 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
   // 위시리스트 삭제를 위한 특정 플랜 조회
   Optional<Plan> findByUserAndBookIsbnAndStatus(User user, String isbn, PlanStatus status);
 
+  @Query("""
+    SELECT p FROM Plan p
+    JOIN FETCH p.book
+    WHERE p.user = :user
+      AND p.status = 'READING'
+      AND :today BETWEEN p.startDate AND p.endDate
+    ORDER BY p.startDate DESC
+    """)
+  List<Plan> findTodayReadingPlans(@Param("user") User user, @Param("today") LocalDate today);
+
 }
 
 
