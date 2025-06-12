@@ -15,4 +15,6 @@ public class AladinItemDto {
   private Long categoryId;
   private String categoryName;
   private String description;
+  private int priceSales;
+
 }

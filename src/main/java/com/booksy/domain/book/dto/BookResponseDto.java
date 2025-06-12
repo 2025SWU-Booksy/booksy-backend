@@ -24,5 +24,7 @@ public class BookResponseDto {
   private Long categoryId;
   private String categoryName;
 
+  private int priceSales;
+
   private boolean isWishlisted;
 }

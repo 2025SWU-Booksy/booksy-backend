@@ -83,6 +83,7 @@ public class BookMapper {
       .description(item.getDescription())
       .categoryName(item.getCategoryName())
       .categoryId(item.getCategoryId())
+      .priceSales(item.getPriceSales())
       .isWishlisted(isWishlisted)
       .build();
   }
