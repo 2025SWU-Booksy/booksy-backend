@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NotificationRequestDto {
 
-  private Long userId;
+  private Integer userId;
   private String title;
   private String body;
 }

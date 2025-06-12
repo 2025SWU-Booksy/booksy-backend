@@ -9,5 +9,5 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> 
 
   Optional<DeviceToken> findByToken(String token);
 
-  List<DeviceToken> findAllByUserId(Long userId);
+  List<DeviceToken> findAllByUserId(Integer userId);
 }

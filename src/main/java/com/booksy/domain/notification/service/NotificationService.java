@@ -8,15 +8,17 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
   private final DeviceTokenRepository deviceTokenRepository;
 
-  public void sendPushToUser(Long userId, String title, String body) {
+  public void sendPushToUser(Integer userId, String title, String body) {
     List<DeviceToken> tokens = deviceTokenRepository.findAllByUserId(userId);
 
     for (DeviceToken token : tokens) {
@@ -34,6 +36,25 @@ public class NotificationService {
       } catch (FirebaseMessagingException e) {
         System.out.println("❌ FCM 전송 실패: " + e.getMessage());
       }
+    }
+  }
+
+  public void sendPushToToken(String token, String title, String body) {
+    Notification notification = Notification.builder()
+      .setTitle(title)
+      .setBody(body)
+      .build();
+
+    Message message = Message.builder()
+      .setToken(token)
+      .setNotification(notification)
+      .build();
+
+    try {
+      FirebaseMessaging.getInstance().send(message);
+      log.info("✅ 푸시 전송 성공: {}", token);
+    } catch (FirebaseMessagingException e) {
+      log.error("❌ 푸시 전송 실패: {}", token, e);
     }
   }
 }
