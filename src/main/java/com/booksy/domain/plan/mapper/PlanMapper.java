@@ -205,9 +205,11 @@ public class PlanMapper {
         .endDate(plan.getEndDate());
     }
 
-    if (status == PlanStatus.READING) {
+    if (status == PlanStatus.READING || status == PlanStatus.ABANDONED) {
       builder.todayIndex(calculateTodayIndex(plan))
         .progressPercent(calculateProgress(plan));
+    } else if (status == PlanStatus.COMPLETED) {
+      builder.progressPercent(100);
     }
 
     if (status == PlanStatus.COMPLETED) {
