@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class PlanListResponseDto {
 
   private Long planId;
+  private String isbn;
   private String title;
   private String author;
   private String publisher;

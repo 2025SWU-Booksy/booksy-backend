@@ -192,6 +192,7 @@ public class PlanMapper {
   public PlanListResponseDto toListDto(Plan plan, PlanStatus status, int scrapCount) {
     PlanListResponseDto.PlanListResponseDtoBuilder builder = PlanListResponseDto.builder()
       .planId(plan.getId())
+      .isbn(plan.getBook().getIsbn())
       .title(plan.getBook().getTitle())
       .author(plan.getBook().getAuthor())
       .publisher(plan.getBook().getPublisher())
